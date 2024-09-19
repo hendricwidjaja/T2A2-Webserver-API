@@ -6,7 +6,7 @@ class User(db.Model):
 
     # attributes of table
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String)
+    username = db.Column(db.String, nullable=False, unique=True)
     firstname = db.Column(db.String)
     lastname = db.Column(db.String)
     email = db.Column(db.String, nullable=False, unique=True)
