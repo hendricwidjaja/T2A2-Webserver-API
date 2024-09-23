@@ -12,6 +12,8 @@ class User(db.Model):
     email = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
 
+    exercises = db.relationship("Exercise", back_populates="user")
+
 class UserSchema(ma.Schema):
     class Meta:
         fields = ("id", "username", "firstname", "lastname", "email", "password")
