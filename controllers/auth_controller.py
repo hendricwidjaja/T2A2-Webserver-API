@@ -9,8 +9,11 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
+from utils import authorise_as_admin
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+# /auth/register - REGISTER NEW USER
 @auth_bp.route("/register", methods=["POST"])
 def register_user():
     try:
@@ -40,6 +43,7 @@ def register_user():
             # unique violation
             return {"error": "Email address must be unique"}, 400
 
+# /auth/login - USER LOGIN
 @auth_bp.route("/login", methods=["POST"])
 def login_user():
     # Get the data from the body of the request
@@ -52,13 +56,13 @@ def login_user():
         # create a JWT token
         token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         # Then return a response to the user with their email address, admin status and JWT token
-        return {"username": user.username, "email": user.email, "token": token}
+        return {"username": user.username, "email": user.email, "token": token, "is_admin": user.is_admin}
     # Else
     else:
         # Respond back with an error message
         return {"error": "Invalid email or password"}, 400
     
-# /auth/users/
+# /auth/users/ - UPDATE USER DETAILS
 @auth_bp.route("/users/", methods=["PUT", "PATCH"])
 # Check if the user has a valid JWT token in the header of their request
 @jwt_required()
@@ -87,3 +91,29 @@ def update_user():
     else:
         # return an error response
         return {"error": "User does not exist."}
+    
+# /auth/users/<int:user_id>
+@auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
+# Check if the user has a valid JWT token in the header of their request
+@jwt_required()
+def delete_user(user_id):
+    # find the user with the id from the db
+    # SELECT * FROM users WHERE id==user_id;
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    # check whether the user is admin or not
+    is_admin = authorise_as_admin()
+    # if exists:
+    if user:
+        # if the user that is logged in is not the selected user and not admin
+        if not is_admin and str(user.id) != get_jwt_identity():
+            return {"error": "Cannot perform this operation. Only owners or admin are allowed to execute this operation"}
+        # delete the user
+        db.session.delete(user)
+        db.session.commit()
+        # return an acknowledgement message
+        return {"message": f"User with id {user_id} is deleted."}
+    # else:
+    else:
+        # return error message
+        return {"message": f"User with id {user_id} not found."}, 404

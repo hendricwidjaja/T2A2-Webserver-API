@@ -17,10 +17,18 @@ def seed_tables():
     # Create a list of User instances
     users = [
         User(
+            username = "Admin",
+            firstname = "Admin",
+            lastname = "Admin",
+            email = "admin@email.com",
+            password = bcrypt.generate_password_hash("123456").decode("utf-8"),
+            is_admin = True
+        ),
+        User(
             username = "User A",
             firstname = "John",
             lastname = "Doe",
-            email = "admin@email.com",
+            email = "usera@email.com",
             password = bcrypt.generate_password_hash("123456").decode("utf-8")
         ),
         User(
@@ -38,20 +46,58 @@ def seed_tables():
         Exercise(
             exercise_name = "Barbell Bench Press",
             description = "A chest building exercise which also trains the triceps and shoulders",
+            body_part = "Chest",
             public = True,
             user = users[0]
         ),
         Exercise(
             exercise_name = "Deadlift",
             description = "A back building exercise which also trains the glutes, hamstrings, core and traps",
+            body_part = "Back",
             public = True,
             user = users[0]
         ),
         Exercise(
             exercise_name = "Squat",
             description = "A leg building exercise which also trains the core",
+            body_part = "Legs",
             public = True,
-            user = users[1]
+            user = users[0]
+        ),
+        Exercise(
+            exercise_name = "Shoulder Press",
+            description = "A shoulder building exercise which also trains the triceps",
+            body_part = "Shoulders",
+            public = True,
+            user = users[0]
+        ),
+        Exercise(
+            exercise_name = "DB Bicep Curls",
+            description = "A bicep building exercise.",
+            body_part = "Biceps",
+            public = True,
+            user = users[0]
+        ),
+        Exercise(
+            exercise_name = "Cable Rope Tricep Extensions",
+            description = "A tricep building exercise",
+            body_part = "Triceps",
+            public = True,
+            user = users[0]
+        ),
+        Exercise(
+            exercise_name = "Crunches",
+            description = "A core building exercise",
+            body_part = "Core",
+            public = True,
+            user = users[0]
+        ),
+        Exercise(
+            exercise_name = "Jog",
+            description = "A cardio building exercise. Zone 2 Cardio.",
+            body_part = "Cardio",
+            public = True,
+            user = users[0]
         )
     ]
 

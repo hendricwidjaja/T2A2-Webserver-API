@@ -11,12 +11,13 @@ class User(db.Model):
     lastname = db.Column(db.String)
     email = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
     exercises = db.relationship("Exercise", back_populates="user")
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "firstname", "lastname", "email", "password")
+        fields = ("id", "username", "firstname", "lastname", "email", "is_admin", "password")
 
 # to handle a single user object
 user_schema = UserSchema(exclude=["password"])
