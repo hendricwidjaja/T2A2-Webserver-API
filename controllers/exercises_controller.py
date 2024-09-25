@@ -45,6 +45,7 @@ def create_exercise():
         user_id = get_jwt_identity(),
         exercise_name = body_data.get("exercise_name"),
         description = body_data.get("description"),
+        body_part = body_data.get("body_part"),
         public = public
     )
     # add and commit to the DB

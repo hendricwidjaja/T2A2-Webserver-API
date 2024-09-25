@@ -3,6 +3,7 @@ from datetime import timedelta
 from flask import Blueprint, request
 
 from models.user import User, user_schema, UserSchema
+from models.exercise import Exercise
 from init import bcrypt, db
 
 from sqlalchemy.exc import IntegrityError
@@ -92,7 +93,7 @@ def update_user():
         # return an error response
         return {"error": "User does not exist."}
     
-# /auth/users/<int:user_id>
+# /auth/users/<int:user_id> - DELETE USER
 @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
 # Check if the user has a valid JWT token in the header of their request
 @jwt_required()
@@ -101,13 +102,24 @@ def delete_user(user_id):
     # SELECT * FROM users WHERE id==user_id;
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
+    # Assign user_id #1 (deleted account) to deleted_account constant variable
+    DELETED_ACCOUNT_ID = 1
     # check whether the user is admin or not
     is_admin = authorise_as_admin()
     # if exists:
     if user:
-        # if the user that is logged in is not the selected user and not admin
+        # if the user that is logged in is not the selected user and not admin, return an error message
         if not is_admin and str(user.id) != get_jwt_identity():
             return {"error": "Cannot perform this operation. Only owners or admin are allowed to execute this operation"}
+        
+        # Delete all public=False exercises, logs and workout routines
+        private_exercises = Exercise.query.filter_by(user_id=user_id, public=False).all()
+        for exercise in private_exercises:
+            db.session.delete(exercise)
+
+        # Transfer any public exercises and workout routines to the "DELETED_ACCOUNT" user
+        Exercise.query.filter_by(user_id=user_id, public=True).update({"user_id": DELETED_ACCOUNT_ID})
+
         # delete the user
         db.session.delete(user)
         db.session.commit()
