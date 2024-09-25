@@ -106,6 +106,48 @@ def seed_tables():
             body_part = "Cardio",
             public = True,
             user = users[1]
+        ),
+        Exercise(
+            exercise_name = "Public Exercise Chest",
+            description = "A chest building exercise.",
+            body_part = "Chest",
+            public = True,
+            user = users[2]
+        ),
+        Exercise(
+            exercise_name = "Private Exercise Shoulders",
+            description = "A shoulders building exercise.",
+            body_part = "Shoulders",
+            public = False,
+            user = users[2]
+        ),
+        Exercise(
+            exercise_name = "Private Exercise Legs",
+            description = "A legs building exercise.",
+            body_part = "Legs",
+            public = False,
+            user = users[2]
+        ),
+        Exercise(
+            exercise_name = "Public Exercise Back",
+            description = "A back building exercise.",
+            body_part = "Back",
+            public = True,
+            user = users[3]
+        ),
+        Exercise(
+            exercise_name = "Public Exercise Shoulders",
+            description = "A shoulders building exercise.",
+            body_part = "Shoulders",
+            public = True,
+            user = users[3]
+        ),
+        Exercise(
+            exercise_name = "Private Exercise Chest",
+            description = "A chest building exercise.",
+            body_part = "Chest",
+            public = False,
+            user = users[3]
         )
     ]
 

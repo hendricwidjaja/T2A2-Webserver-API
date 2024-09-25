@@ -23,7 +23,7 @@ class Exercise(db.Model):
     user = db.relationship("User", back_populates="exercises")
 
 class ExerciseSchema(ma.Schema):
-    body_part = fields.String(validate=OneOf(VALID_BODYPARTS))
+    body_part = fields.String(required=False, validate=OneOf(VALID_BODYPARTS))
     created_by = fields.Nested("UserSchema", only=["username"], attribute="user")
 
     class Meta:
