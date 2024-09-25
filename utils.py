@@ -11,3 +11,11 @@ def authorise_as_admin():
     user = db.session.scalar(stmt)
     # check whether the user is an admin or not
     return user.is_admin
+
+def string_to_bool(text):
+    if text.lower() == "true":
+        return True
+    elif text.lower() == "false":
+        return False
+    else:
+        return {"error": "public value can only be True or False"}
