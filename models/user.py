@@ -14,6 +14,8 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
 
     exercises = db.relationship("Exercise", back_populates="user")
+    routines = db.relationship("Routine", back_populates="user")
+    likes = db.relationship("Like", back_populates="user", cascade="all, delete")
 
 class UserSchema(ma.Schema):
     class Meta:

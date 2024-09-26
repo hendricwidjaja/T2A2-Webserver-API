@@ -14,6 +14,8 @@ from utils import authorise_as_admin
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+DELETED_ACCOUNT_ID = 1
+
 # /auth/register - REGISTER NEW USER
 @auth_bp.route("/register", methods=["POST"])
 def register_user():
@@ -102,8 +104,8 @@ def delete_user(user_id):
     # SELECT * FROM users WHERE id==user_id;
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
-    # Assign user_id #1 (deleted account) to deleted_account constant variable
-    DELETED_ACCOUNT_ID = 1
+    # Assign user_id #1 (deleted account) to deleted_account variable
+    deleted_account = DELETED_ACCOUNT_ID
     # check whether the user is admin or not
     is_admin = authorise_as_admin()
     # if exists:
@@ -118,7 +120,7 @@ def delete_user(user_id):
             db.session.delete(exercise)
 
         # Transfer any public exercises and workout routines to the "DELETED_ACCOUNT" user
-        Exercise.query.filter_by(user_id=user_id, public=True).update({"user_id": DELETED_ACCOUNT_ID})
+        Exercise.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
 
         # delete the user
         db.session.delete(user)
