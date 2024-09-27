@@ -1,5 +1,6 @@
 from init import db, ma
 from sqlalchemy import func
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from marshmallow import fields, Method
 from marshmallow.validate import OneOf
@@ -24,6 +25,9 @@ class Routine(db.Model):
     routine_exercises = db.relationship("RoutineExercise", back_populates="routine", cascade="all, delete")
     likes = db.relationship("Like", back_populates="routine", cascade="all, delete")
 
+    # Defines "likes_count" as a hybrid property (both an attribute and a function)
+    @hybrid_property
+    # Function to count how many users have liked the specific routine
     def likes_count(self):
         return len(self.likes)
 
@@ -31,11 +35,8 @@ class RoutineSchema(ma.Schema):
     target = fields.String(validate=OneOf(VALID_TARGET))
     created_by = fields.Nested("UserSchema", only=["username"], attribute="user")
     routine_exercises = fields.List(fields.Nested('RoutineExerciseSchema'))
-
-    likes_count = ma.Method("get_likes_count")
-
-    def get_likes_count(self, obj):
-        return obj.likes_count()
+    # Defines the "likes_count" field as an integer which is equal to the result of the "likes_count" method/property in the Routine model.
+    likes_count = fields.Integer(attribute="likes_count")
 
     class Meta:
         fields = ("id", "routine_title", "description", "target", "public", "created", "created_by", "routine_exercises", "likes_count")
