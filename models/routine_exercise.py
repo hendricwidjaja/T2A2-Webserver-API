@@ -1,7 +1,6 @@
 from init import db, ma
-from sqlalchemy import func
 
-from marshmallow import fields, pre_dump
+from marshmallow import pre_dump
 
 class RoutineExercise(db.Model):
     # name of table
@@ -12,7 +11,8 @@ class RoutineExercise(db.Model):
     sets = db.Column(db.Integer)
     reps = db.Column(db.Integer)
     weight = db.Column(db.Integer)
-    duration = db.Column(db.Interval)
+    minutes = db.Column(db.Interval)
+    seconds = db.Column(db.Interval)
     note = db.Column(db.String)
 
     # Foreign Key (users.id = tablename.primarykey attribute)
@@ -36,7 +36,7 @@ class RoutineExerciseSchema(ma.Schema):
         return attributes_with_values
 
     class Meta:
-        fields = ("id", "sets", "reps", "weight", "duration", "note")
+        fields = ("id", "sets", "reps", "weight", "minutes", "seconds", "note")
 
 # to handle a single user object
 routine_exercise_schema = RoutineExerciseSchema()
