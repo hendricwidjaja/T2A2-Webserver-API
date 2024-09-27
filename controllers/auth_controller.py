@@ -4,13 +4,14 @@ from flask import Blueprint, request
 
 from models.user import User, user_schema, UserSchema
 from models.exercise import Exercise
+from models.routine import Routine
 from init import bcrypt, db
 
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
-from utils import authorise_as_admin
+from utils import auth_as_admin_or_owner
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -43,7 +44,7 @@ def register_user():
         if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
             return {"error": f"The column {err.orig.diag.column_name} is required"}, 400
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
-            # unique violation
+            # Unique violation
             return {"error": "Email address must be unique"}, 400
 
 # /auth/login - USER LOGIN
@@ -67,7 +68,7 @@ def login_user():
     
 # /auth/users/ - UPDATE USER DETAILS
 @auth_bp.route("/users/", methods=["PUT", "PATCH"])
-# Check if the user has a valid JWT token in the header of their request
+# Check if the user has a valid JWT token in the header of their request / else flask_jwt_extended will return error message.
 @jwt_required()
 def update_user():
     # get the fields from the body of the request
@@ -78,56 +79,45 @@ def update_user():
     # SELECT * FROM user WHERE id = get_jwt_identity
     stmt = db.select(User).filter_by(id=get_jwt_identity())
     user = db.session.scalar(stmt)
-    # if the user exists:
-    if user:
-        # update the fields as required
-        user.username = body_data.get("username") or user.username
-        user.firstname = body_data.get("firstname") or user.firstname
-        user.lastname = body_data.get("lastname") or user.lastname
-        if password:
-            user.password = bcrypt.generate_password_hash(password).decode("utf-8")
-        # commit the changes to the database
-        db.session.commit()
-        # return a response to the user, acknowledging the changes
-        return user_schema.dump(user)
-    # else:
-    else:
-        # return an error response
-        return {"error": "User does not exist."}
+
+    # update the fields as required
+    user.username = body_data.get("username") or user.username
+    user.firstname = body_data.get("firstname") or user.firstname
+    user.lastname = body_data.get("lastname") or user.lastname
+    if password:
+        user.password = bcrypt.generate_password_hash(password).decode("utf-8")
+    # commit the changes to the database
+    db.session.commit()
+    # return a response to the user, acknowledging the changes
+    return user_schema.dump(user)
+
     
 # /auth/users/<int:user_id> - DELETE USER
 @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
 # Check if the user has a valid JWT token in the header of their request
 @jwt_required()
+# Check if logged in user is admin or owner
+@auth_as_admin_or_owner
 def delete_user(user_id):
     # find the user with the id from the db
     # SELECT * FROM users WHERE id==user_id;
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
+
     # Assign user_id #1 (deleted account) to deleted_account variable
     deleted_account = DELETED_ACCOUNT_ID
-    # check whether the user is admin or not
-    is_admin = authorise_as_admin()
-    # if exists:
-    if user:
-        # if the user that is logged in is not the selected user and not admin, return an error message
-        if not is_admin and str(user.id) != get_jwt_identity():
-            return {"error": "Cannot perform this operation. Only owners or admin are allowed to execute this operation"}
-        
-        # Delete all public=False exercises, logs and workout routines
-        private_exercises = Exercise.query.filter_by(user_id=user_id, public=False).all()
-        for exercise in private_exercises:
-            db.session.delete(exercise)
 
-        # Transfer any public exercises and workout routines to the "DELETED_ACCOUNT" user
-        Exercise.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
+    # Delete all private routines
+    private_routines = Routine.query.filter_by(user_id=user_id, public=False).all()
+    for routine in private_routines:
+        db.session.delete(routine)
 
-        # delete the user
-        db.session.delete(user)
-        db.session.commit()
-        # return an acknowledgement message
-        return {"message": f"User with id {user_id} is deleted."}
-    # else:
-    else:
-        # return error message
-        return {"message": f"User with id {user_id} not found."}, 404
+    # Transfer ownership of any created exercises and public routines to the "DELETED_ACCOUNT" user_id
+    Routine.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
+    Exercise.query.filter_by(user_id=user_id).update({"user_id": deleted_account})
+
+    # delete the user
+    db.session.delete(user)
+    db.session.commit()
+    # return an acknowledgement message
+    return {"message": f"User with id {user_id} is deleted."}
