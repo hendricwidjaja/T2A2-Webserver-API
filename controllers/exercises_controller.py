@@ -3,6 +3,7 @@ from flask import Blueprint, request
 from models.exercise import Exercise, exercise_schema, exercises_schema, ExerciseSchema
 from models.user import User
 from init import bcrypt, db
+from utils import auth_as_admin_or_owner
 
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -102,7 +103,15 @@ def create_exercise():
         db.session.rollback()
         return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
-# @exercises_bp.route("/", methods=["DELETE"])
+# @exercises_bp.route("/<int:exercise_id", methods=["DELETE"])
 # @jwt_required()
-# def delete_exercise():
-#     # get the details of the new exercise from the body of the request
+# @auth_as_admin_or_owner
+# def delete_exercise(exercise_id):
+#     # Fetch the exercise the user is requesting to delete from the database
+#     stmt = db.select(Exercise).filter_by(id=exercise_id)
+#     exercise = db.session.scalar(stmt)
+
+#     if not exercise:
+#         return {"error": f"Exercise with ID '{exercise_id}' could not be found."}
+#     else:
+        

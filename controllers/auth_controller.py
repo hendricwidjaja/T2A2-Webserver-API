@@ -104,26 +104,21 @@ def delete_user(user_id):
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
 
-    # If user exists:
-    if user:
-        # Assign user_id #1 (deleted account) to deleted_account variable
-        deleted_account = DELETED_ACCOUNT_ID
+    # Assign user_id #1 (deleted account) to deleted_account variable
+    deleted_account = DELETED_ACCOUNT_ID
 
-        # Delete all private routines
-        private_routines = Routine.query.filter_by(user_id=user_id, public=False).all()
-        for routine in private_routines:
-            db.session.delete(routine)
+    # Delete all private routines
+    private_routines = Routine.query.filter_by(user_id=user_id, public=False).all()
+    for routine in private_routines:
+        db.session.delete(routine)
 
-        # Transfer ownership of any created exercises and public routines to the "DELETED_ACCOUNT" user_id
-        Routine.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
-        Exercise.query.filter_by(user_id=user_id).update({"user_id": deleted_account})
+    # Transfer ownership of any created exercises and public routines to the "DELETED_ACCOUNT" user_id
+    Routine.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
+    Exercise.query.filter_by(user_id=user_id).update({"user_id": deleted_account})
 
-        # delete the user
-        db.session.delete(user)
-        db.session.commit()
-        # return an acknowledgement message
-        return {"message": f"User with id {user_id} is deleted."}
-    # Else:
-    else:
-        # Return error message to advise user doesn't exist
-        return {"message": f"User with id {user_id} could not be found."}, 404
+    # delete the user
+    db.session.delete(user)
+    db.session.commit()
+    # return an acknowledgement message
+    return {"message": f"User with id {user_id} is deleted."}
+
