@@ -21,8 +21,8 @@ class Exercise(db.Model):
     routine_exercises = db.relationship("RoutineExercise", back_populates="exercise")
 
 class ExerciseSchema(ma.Schema):
-    exercise_name = fields.String(required=True, validate=Length(max=50), error="Exercise name cannot exceed 50 characters")
-    description = fields.String(validate=Length(max=255), error="You have exceeded the 255 character count limit.")
+    exercise_name = fields.String(required=True, validate=Length(max=50, min=1))
+    description = fields.String(validate=Length(max=255))
     body_part = fields.String(required=True, validate=OneOf(VALID_BODYPARTS))
     created_by = fields.Nested('UserSchema', only=["username"])
 

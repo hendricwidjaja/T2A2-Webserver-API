@@ -4,6 +4,7 @@ from models.exercise import Exercise, exercise_schema, exercises_schema, Exercis
 from models.user import User
 from init import bcrypt, db
 
+from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 
@@ -71,27 +72,35 @@ def get_exercise(exercise_id):
 @exercises_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_exercise():
-    # get the details of the new exercise from the body of the request
-    body_data = exercise_schema.load(request.get_json())
+    try:
+        # Get the details of the new exercise from the body of the request
+        body_data = exercise_schema.load(request.get_json())
+
+        # Check if the provided exercise name already exists in the list of exercises
+        exercise_name = body_data.get("exercise_name")
+        existing_exercise = db.session.query(Exercise).filter_by(exercise_name=exercise_name).first()
+        # If the exercise already exists, send an error message
+        if existing_exercise: 
+            return {"error": "An exercise with that name already exists. Please choose a different name."}, 400
+
+        # Populate new entry into exercise table accordingly
+        exercise = Exercise(
+            user_id = get_jwt_identity(),
+            exercise_name = body_data.get("exercise_name"),
+            description = body_data.get("description"),
+            body_part = body_data.get("body_part"),
+        )
+        # Add and commit to the DB
+        db.session.add(exercise)
+        db.session.commit()
+
+        # Successfully created response message
+        return exercise_schema.dump(exercise), 201
     
-    if "body_part" not in body_data:
-        return {"error": "body_part is required when creating an exercise."}, 400
-
-    public_value = body_data.get("public")
-    public = str(public_value).lower() in ("true", "yes")
-
-    exercise = Exercise(
-        user_id = get_jwt_identity(),
-        exercise_name = body_data.get("exercise_name"),
-        description = body_data.get("description"),
-        body_part = body_data.get("body_part"),
-        public = public
-    )
-    # add and commit to the DB
-    db.session.add(exercise)
-    db.session.commit()
-    # response message
-    return exercise_schema.dump(exercise)
+    # Error handling & rollback
+    except IntegrityError as err:
+        db.session.rollback()
+        return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
 # @exercises_bp.route("/", methods=["DELETE"])
 # @jwt_required()
