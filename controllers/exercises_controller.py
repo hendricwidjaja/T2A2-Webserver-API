@@ -55,6 +55,19 @@ def get_exercises():
     return exercises_schema.dump(exercises)
 
 
+# /exercises/<int:exercise_id> - GET - fetch a specific exercise
+@exercises_bp.route("/<int:exercise_id>", methods=["GET"])
+def get_exercise(exercise_id):
+    stmt = db.select(Exercise).filter_by(id=exercise_id)
+
+    card = db.session.scalar(stmt)
+
+    if card:
+        return exercise_schema.dump(card), 200
+    else:
+        return {"error": f"Exercise with id '{exercise_id}' not found"}, 404
+
+
 @exercises_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_exercise():
