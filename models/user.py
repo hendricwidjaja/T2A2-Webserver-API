@@ -16,7 +16,7 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-    exercises = db.relationship("Exercise", back_populates="user")
+    exercises = db.relationship("Exercise", back_populates="created_by")
     routines = db.relationship("Routine", back_populates="user")
     likes = db.relationship("Like", back_populates="user", cascade="all, delete")
 

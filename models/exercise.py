@@ -17,13 +17,13 @@ class Exercise(db.Model):
     # Foreign Key (users.id = tablename.primarykey attribute)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    user = db.relationship("User", back_populates="exercises")
+    created_by = db.relationship("User", back_populates="exercises")
     routine_exercises = db.relationship("RoutineExercise", back_populates="exercise")
 
 class ExerciseSchema(ma.Schema):
     exercise_name = fields.String(required=True, validate=Length(max=50), error="Exercise name cannot exceed 50 characters")
     description = fields.String(validate=Length(max=255), error="You have exceeded the 255 character count limit.")
-    body_part = fields.String(required=False, validate=OneOf(VALID_BODYPARTS))
+    body_part = fields.String(required=True, validate=OneOf(VALID_BODYPARTS))
     created_by = fields.Nested('UserSchema', only=["username"])
 
     class Meta:

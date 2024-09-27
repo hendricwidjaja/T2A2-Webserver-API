@@ -9,54 +9,51 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 
 exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 
-# GET - list of exercises (both public & private)
+# GET - list of exercises
 # POST - create a new exercise
 # POST - copy an existing public exercise and create a private copy
 # UPDATE - a specific exercise (can only update if user created the exercise)
 # DELETE - a specific exercise (can only delete if user created the exercise)
 
-# /exercises - GET - fetch all exercises which are public and created by the logged in user
+# /exercises - GET - fetch all exercises (optional: filter by body_part and/or username)
 @exercises_bp.route("/", methods=["GET"])
-@jwt_required(optional=True)
 def get_exercises():
-    # Retrieve data from the request body
+    # Fetch any fields from body of request
     body_data = request.get_json(silent=True) or {}
 
     # If username or body_part is provided in the request, store the data in respective variable
     body_part = body_data.get("body_part", None)
     username = body_data.get("username", None)
 
-    # Grabs the ID of the user if user is logged in
-    user_id = get_jwt_identity()
+    # Fetch all exercises
+    stmt = db.select(Exercise)
 
-    # Selects all exercises in the Exercise model which have public set as True
-    stmt = db.select(Exercise).filter_by(public=True)
-
-    # If user provides a body_part, filter exercises by selected body_part
+    # If user provides "body_part" or "username", filter by user value
     if body_part:
-        stmt = stmt.filter_by(body_part=body_part)
-
-    # If user provides a username, filter exercises by exercises created by specific user (public only)
+        stmt = stmt.filter(Exercise.body_part == body_part)
     if username:
-        stmt = stmt.join(User).filter_by(username=username)
+        stmt = stmt.join(User).filter(User.username == username)
 
-    # If the user is logged in + no username is searched
-    if user_id and not username:
-        # Fetch the users private exercises
-        user_stmt = db.select(Exercise).filter_by(user_id=user_id)
-        # If the user included a body_part search
-        if body_part:
-            # filter the user's private exercises by searched body_part
-            user_stmt = user_stmt.filter_by(body_part=body_part)
-        # Join the user's private filtered/unfiltered exercises (user_stmt) to the list of public exercises (stmt)
-        stmt = stmt.union(user_stmt)
+    # Return exercises in alphabetical order (by exercise_name)
+    stmt = stmt.order_by(Exercise.exercise_name.asc())
 
-    # Order the exercise by name
-    stmt = stmt.order_by(Exercise.exercise_name)
+    # Execute the query
+    exercises = db.session.scalars(stmt).all()
 
-    exercises = db.session.scalars(stmt)
+    # Error handling if exercise can't be found for each case
+    if not exercises:
+        if body_part and username:
+            return {"error": f"We couldn't find any '{body_part}' exercises by '{username}'. Make sure body_part = (Chest, Shoulders, Back, Legs, Triceps, Biceps, Core, Cardio)"}, 404
+        elif body_part:
+            return {"error": f"We couldn't find any '{body_part}' exercises. Try searching by (Chest, Shoulders, Back, Legs, Triceps, Biceps, Core, Cardio)"}, 404
+        elif username:
+            return {"error": f"We couldn't find any exercises by '{username}'."}, 404
+        else:
+            return {"error": "No exercises found."}, 404
 
-    return exercises_schema.dump(exercises), 200
+    # Return the exercises as a response
+    return exercises_schema.dump(exercises)
+
 
 @exercises_bp.route("/", methods=["POST"])
 @jwt_required()
