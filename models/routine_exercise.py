@@ -11,8 +11,9 @@ class RoutineExercise(db.Model):
     sets = db.Column(db.Integer)
     reps = db.Column(db.Integer)
     weight = db.Column(db.Integer)
-    minutes = db.Column(db.Interval)
-    seconds = db.Column(db.Interval)
+    distance_km = db.Column(db.Float)
+    minutes = db.Column(db.Integer)
+    seconds = db.Column(db.Integer)
     note = db.Column(db.String)
 
     # Foreign Key (users.id = tablename.primarykey attribute)
@@ -25,6 +26,8 @@ class RoutineExercise(db.Model):
 
 class RoutineExerciseSchema(ma.Schema):
 
+    # Using @pre_dump decorator to apply function which rounds value for distance_km to 2 decimal places
+
     # Using @pre_dump decorator to apply function which removes fields with None values before providing output to user
     @pre_dump
     def remove_empty_attributes(self, data, **kwargs):
@@ -36,7 +39,7 @@ class RoutineExerciseSchema(ma.Schema):
         return attributes_with_values
 
     class Meta:
-        fields = ("id", "sets", "reps", "weight", "minutes", "seconds", "note")
+        fields = ("id", "sets", "reps", "weight", "distance_km", "minutes", "seconds", "note")
 
 # to handle a single user object
 routine_exercise_schema = RoutineExerciseSchema()
