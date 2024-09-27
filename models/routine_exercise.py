@@ -1,7 +1,7 @@
 from init import db, ma
 from sqlalchemy import func
 
-from marshmallow import fields
+from marshmallow import fields, pre_dump
 
 class RoutineExercise(db.Model):
     # name of table
@@ -24,6 +24,16 @@ class RoutineExercise(db.Model):
     routine = db.relationship("Routines", back_populates="routine_exercises")
 
 class RoutineExerciseSchema(ma.Schema):
+
+    # Using @pre_dump decorator to apply function which removes fields with None values before providing output to user
+    @pre_dump
+    def remove_empty_attributes(self, data, **kwargs):
+        attributes_with_values = {}
+        for key, value in data.__dict__.items():
+            if value is not None:
+                attributes_with_values[key] = value
+  
+        return attributes_with_values
 
     class Meta:
         fields = ("id", "sets", "reps", "weight", "duration", "note")

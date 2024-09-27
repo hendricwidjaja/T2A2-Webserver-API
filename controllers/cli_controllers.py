@@ -4,6 +4,7 @@ from init import db, bcrypt
 
 from models.user import User
 from models.exercise import Exercise
+from models.routine import Routine
 
 db_commands = Blueprint("db", __name__)
 
@@ -17,11 +18,11 @@ def seed_tables():
     # Create a list of User instances
     users = [
         User(
-            username = "Deleted Account",
+            username = "Deleted_Account",
             firstname = "Deleted Account",
             lastname = "Deleted Account",
             email = "deleted@email.com",
-            password = bcrypt.generate_password_hash("123456").decode("utf-8"),
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8"),
             is_admin = True
         ),
         User(
@@ -29,22 +30,22 @@ def seed_tables():
             firstname = "Admin",
             lastname = "Admin",
             email = "admin@email.com",
-            password = bcrypt.generate_password_hash("123456").decode("utf-8"),
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8"),
             is_admin = True
         ),
         User(
-            username = "User A",
+            username = "Test.User_A",
             firstname = "John",
             lastname = "Doe",
             email = "usera@email.com",
-            password = bcrypt.generate_password_hash("123456").decode("utf-8")
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
         ),
         User(
-            username = "User B",
+            username = "Test.User_B",
             firstname = "Julie",
             lastname = "Doe",
             email = "userb@email.com",
-            password = bcrypt.generate_password_hash("123456").decode("utf-8")
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
         )
     ]
 
@@ -55,103 +56,113 @@ def seed_tables():
             exercise_name = "Barbell Bench Press",
             description = "A chest building exercise which also trains the triceps and shoulders",
             body_part = "Chest",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Deadlift",
             description = "A back building exercise which also trains the glutes, hamstrings, core and traps",
             body_part = "Back",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Squat",
             description = "A leg building exercise which also trains the core",
             body_part = "Legs",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Shoulder Press",
             description = "A shoulder building exercise which also trains the triceps",
             body_part = "Shoulders",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "DB Bicep Curls",
             description = "A bicep building exercise.",
             body_part = "Biceps",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Cable Rope Tricep Extensions",
             description = "A tricep building exercise",
             body_part = "Triceps",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Crunches",
             description = "A core building exercise",
             body_part = "Core",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Jog",
             description = "A cardio building exercise. Zone 2 Cardio.",
             body_part = "Cardio",
-            public = True,
             user = users[1]
         ),
         Exercise(
             exercise_name = "Public Exercise Chest",
             description = "A chest building exercise.",
             body_part = "Chest",
-            public = True,
             user = users[2]
         ),
         Exercise(
             exercise_name = "Private Exercise Shoulders",
             description = "A shoulders building exercise.",
             body_part = "Shoulders",
-            public = False,
             user = users[2]
         ),
         Exercise(
             exercise_name = "Private Exercise Legs",
             description = "A legs building exercise.",
             body_part = "Legs",
-            public = False,
             user = users[2]
         ),
         Exercise(
             exercise_name = "Public Exercise Back",
             description = "A back building exercise.",
             body_part = "Back",
-            public = True,
             user = users[3]
         ),
         Exercise(
             exercise_name = "Public Exercise Shoulders",
             description = "A shoulders building exercise.",
             body_part = "Shoulders",
-            public = True,
             user = users[3]
         ),
         Exercise(
             exercise_name = "Private Exercise Chest",
             description = "A chest building exercise.",
             body_part = "Chest",
-            public = False,
             user = users[3]
         )
     ]
 
     db.session.add_all(exercises)
+
+    routines = [
+        Routine(
+            routine_title = "User A FullBody Workout",
+            description = "This workout is a killer! Targets all body parts. Try to complete in 60min",
+            target = "Full Body",
+            public = True,
+            user = users[2]
+        ),
+        Routine(
+            routine_title = "User B Upper Body Workout",
+            description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
+            target = "Upper Body",
+            public = True,
+            user = users[3]
+        ),
+        Routine(
+            routine_title = "User A FullBody Workout",
+            description = "This workout is a killer! Targets all body parts. Try to complete in 60min",
+            target = "Full Body",
+            public = True,
+            user = users[2]
+        ),
+    ]
 
     db.session.commit()
 

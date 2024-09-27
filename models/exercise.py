@@ -1,7 +1,7 @@
 from init import db, ma
 
 from marshmallow import fields
-from marshmallow.validate import OneOf
+from marshmallow.validate import OneOf, Length
 
 VALID_BODYPARTS = ("Chest", "Shoulders", "Back", "Legs", "Triceps", "Biceps", "Core", "Cardio")
 
@@ -21,10 +21,13 @@ class Exercise(db.Model):
     routine_exercises = db.relationship("RoutineExercise", back_populates="exercise")
 
 class ExerciseSchema(ma.Schema):
+    exercise_name = fields.String(required=True, validate=Length(max=50), error="Exercise name cannot exceed 50 characters")
+    description = fields.String(validate=Length(max=255), error="You have exceeded the 255 character count limit.")
     body_part = fields.String(required=False, validate=OneOf(VALID_BODYPARTS))
+    created_by = fields.Nested('UserSchema', only=["username"])
 
     class Meta:
-        fields = ("id", "exercise_name", "description", "body_part")
+        fields = ("id", "exercise_name", "description", "body_part", "created_by")
 
 # to handle a single user object
 exercise_schema = ExerciseSchema()

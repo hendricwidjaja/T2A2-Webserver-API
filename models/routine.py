@@ -2,8 +2,8 @@ from init import db, ma
 from sqlalchemy import func
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from marshmallow import fields, Method
-from marshmallow.validate import OneOf
+from marshmallow import fields, validates, ValidationError
+from marshmallow.validate import OneOf, Length
 
 VALID_TARGET = ("Full Body", "Upper Body", "Lower Body", "Push Workout", "Pull Workout", "Chest", "Shoulders", "Back", "Legs", "Arms", "Core", "Cardio")
 
@@ -32,11 +32,19 @@ class Routine(db.Model):
         return len(self.likes)
 
 class RoutineSchema(ma.Schema):
+    title = fields.String(validate=Length(max=50), error="Routine title cannot exceed 50 characters.")
+    description = fields.String(validate=Length(max=255), error="You have exceeded the 255 character count limit.")
     target = fields.String(validate=OneOf(VALID_TARGET))
+    public = fields.Boolean(missing=False)
     created_by = fields.Nested("UserSchema", only=["username"], attribute="user")
     routine_exercises = fields.List(fields.Nested('RoutineExerciseSchema'))
     # Defines the "likes_count" field as an integer which is equal to the result of the "likes_count" method/property in the Routine model.
     likes_count = fields.Integer(attribute="likes_count")
+
+    @validates('public')
+    def public_validation(self, value):
+        if value not in [True, False]:
+            raise ValidationError("The 'public' field can only be 'True' or 'False'.")
 
     class Meta:
         fields = ("id", "routine_title", "description", "target", "public", "created", "created_by", "routine_exercises", "likes_count")
