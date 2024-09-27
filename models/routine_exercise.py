@@ -22,7 +22,7 @@ class RoutineExercise(db.Model):
 
     # Define relationships
     exercise = db.relationship("Exercise", back_populates="routine_exercises")
-    routine = db.relationship("Routines", back_populates="routine_exercises")
+    routine = db.relationship("Routine", back_populates="routine_exercises")
 
 class RoutineExerciseSchema(ma.Schema):
 

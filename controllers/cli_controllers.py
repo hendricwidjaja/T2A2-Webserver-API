@@ -250,7 +250,7 @@ def seed_tables():
         RoutineExercise(
             routine = routines[3],
             exercise = exercises[7],
-            distance_km = 5
+            distance_km = 5,
             minutes = 20,
             seconds = 45,
             note = "Insert note here"
