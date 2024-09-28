@@ -120,5 +120,5 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     # return an acknowledgement message
-    return {"message": f"User with id {user_id} is deleted."}
+    return {"message": f"User with id {user_id} has been deleted."}
 

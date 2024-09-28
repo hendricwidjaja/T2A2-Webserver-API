@@ -17,7 +17,7 @@ class Exercise(db.Model):
     # Foreign Key (users.id = tablename.primarykey attribute)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    created_by = db.relationship("User", back_populates="exercises")
+    user = db.relationship("User", back_populates="exercises")
     routine_exercises = db.relationship("RoutineExercise", back_populates="exercise")
 
 class ExerciseSchema(ma.Schema):

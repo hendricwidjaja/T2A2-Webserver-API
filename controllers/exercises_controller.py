@@ -2,6 +2,7 @@ from flask import Blueprint, request
 
 from models.exercise import Exercise, exercise_schema, exercises_schema, ExerciseSchema
 from models.user import User
+from models.routine_exercise import RoutineExercise
 from init import bcrypt, db
 from utils import auth_as_admin_or_owner
 
@@ -103,15 +104,23 @@ def create_exercise():
         db.session.rollback()
         return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
-# @exercises_bp.route("/<int:exercise_id", methods=["DELETE"])
-# @jwt_required()
-# @auth_as_admin_or_owner
-# def delete_exercise(exercise_id):
-#     # Fetch the exercise the user is requesting to delete from the database
-#     stmt = db.select(Exercise).filter_by(id=exercise_id)
-#     exercise = db.session.scalar(stmt)
+@exercises_bp.route("/<int:exercise_id>", methods=["DELETE"])
+@jwt_required()
+@auth_as_admin_or_owner
+def delete_exercise(exercise_id):
+    # Fetch the exercise the user is requesting to delete from the database
+    stmt = db.select(Exercise).filter_by(id=exercise_id)
+    exercise = db.session.scalar(stmt)
 
-#     if not exercise:
-#         return {"error": f"Exercise with ID '{exercise_id}' could not be found."}
-#     else:
-        
+    # Check if exercise appears in a user's routine
+    exercise_is_used = db.session.query(RoutineExercise).filter_by(exercise_id=exercise_id).first()
+    # If exists in a user's routine:
+    if exercise_is_used:
+        # return error
+        return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Delete has been aborted."}
+
+    # If it doesn't exist in a user's routine, delete the exercise from the database
+    db.session.delete(exercise)
+    db.session.commit()
+    # Return an acknowledgement message
+    return {"message": f"Exercise with 'ID - {exercise_id}' has been successfully deleted."}

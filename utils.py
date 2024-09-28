@@ -27,6 +27,8 @@ def auth_as_admin(fn):
     return wrapper
 
 # Decorator for checking if logged in user is the owner of the resource OR an admin
+# Includes validation by checking if the resource id in the URL can be found in the respective resource table
+
 def auth_as_admin_or_owner(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -50,9 +52,10 @@ def auth_as_admin_or_owner(fn):
                 # Return error message
                 return {"error": f"User with id {user_id} could not be found."}, 404
             # if user is admin or correct user
-            if user.is_admin or user.id == user_id:
+            if user.is_admin or user.id == int(user_id):
                 # allow the function to execute
                 return fn(*args, **kwargs)
+            
         # If exercise_id is provided in URL:
         elif exercise_id:
             # Check if exercise_id exists in Exercise table
@@ -60,11 +63,11 @@ def auth_as_admin_or_owner(fn):
             # If it doesn't exist:
             if not exercise_exists:
                 # Return error message
-                return {"error": f"Exercise with ID '{exercise_id}' could not be found."}
+                return {"error": f"Exercise with ID '{exercise_id}' could not be found."}, 404
             # Else:
             else:
                 # if user is admin or owner of exercise
-                if user.is_admin or exercise_exists.user_id == logged_user_id:
+                if user.is_admin or exercise_exists.user_id == int(logged_user_id):
                     # allow the function to execute
                     return fn(*args, **kwargs)
         # If routine_id is provided in URL:
@@ -74,15 +77,14 @@ def auth_as_admin_or_owner(fn):
             # If it doesn't exist:
             if not routine_exists:
                 # Return error message
-                return {"error": f"Routine with ID '{routine_id}' could not be found."}
+                return {"error": f"Routine with ID '{routine_id}' could not be found."}, 404
             # Else:
             else:
                 # if user is admin or owner of routine
-                if user.is_admin or routine_exists.user_id == logged_user_id:
+                if user.is_admin or routine_exists.user_id == int(logged_user_id):
                     # allow the function to execute
                     return fn(*args, **kwargs)
-        # else
-        else:
-            return {"error": "Only admin or the owner of this resource can perform this action."}, 403
+
+        return {"error": "Only admin or the owner of this resource can perform this action."}, 403
         
     return wrapper
