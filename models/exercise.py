@@ -24,7 +24,7 @@ class ExerciseSchema(ma.Schema):
     exercise_name = fields.String(required=True, validate=Length(max=50, min=1))
     description = fields.String(validate=Length(max=255))
     body_part = fields.String(required=True, validate=OneOf(VALID_BODYPARTS))
-    created_by = fields.Nested('UserSchema', only=["username"])
+    created_by = fields.Nested('UserSchema', only=["username"], attribute="user")
 
     class Meta:
         fields = ("id", "exercise_name", "description", "body_part", "created_by")

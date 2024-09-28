@@ -1,22 +1,18 @@
 from flask import Blueprint, request
 
-from models.exercise import Exercise, exercise_schema, exercises_schema, ExerciseSchema
+from models.exercise import Exercise, exercise_schema, exercises_schema
 from models.user import User
 from models.routine_exercise import RoutineExercise
-from init import bcrypt, db
-from utils import auth_as_admin_or_owner
+from init import db
+from utils import auth_as_admin_or_owner, ADMIN_EMAIL, user_is_admin
 
 from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from psycopg2 import errorcodes
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 
-# GET - list of exercises
-# POST - create a new exercise
-# POST - copy an existing public exercise and create a private copy
-# UPDATE - a specific exercise (can only update if user created the exercise)
-# DELETE - a specific exercise (can only delete if user created the exercise)
 
 # /exercises - GET - fetch all exercises (optional: filter by body_part and/or username)
 @exercises_bp.route("/", methods=["GET"])
@@ -71,6 +67,7 @@ def get_exercise(exercise_id):
         return {"error": f"Exercise with id '{exercise_id}' not found"}, 404
 
 
+# /exercises/ - POST - create an exercise
 @exercises_bp.route("/", methods=["POST"])
 @jwt_required()
 def create_exercise():
@@ -104,6 +101,8 @@ def create_exercise():
         db.session.rollback()
         return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
+
+# /exercises/<int:exercise_id> - DELETE - Delete an exercise
 @exercises_bp.route("/<int:exercise_id>", methods=["DELETE"])
 @jwt_required()
 @auth_as_admin_or_owner
@@ -117,10 +116,51 @@ def delete_exercise(exercise_id):
     # If exists in a user's routine:
     if exercise_is_used:
         # return error
-        return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Delete has been aborted."}
+        return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Delete has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}
 
     # If it doesn't exist in a user's routine, delete the exercise from the database
     db.session.delete(exercise)
     db.session.commit()
     # Return an acknowledgement message
     return {"message": f"Exercise with 'ID - {exercise_id}' has been successfully deleted."}
+
+
+# /exercises/<int:exercise_id> - PUT/PATCH - Update an exercise
+@exercises_bp.route("/<int:exercise_id>", methods=["PUT", "PATCH"])
+@jwt_required()
+@auth_as_admin_or_owner
+def update_exercise(exercise_id):
+    try:
+        # Fetch data from body of request
+        body_data = exercise_schema.load(request.get_json(), partial=True)
+
+        # Fetch the exercise the user is requesting to update from the database
+        stmt = db.select(Exercise).filter_by(id=exercise_id)
+        exercise = db.session.scalar(stmt)
+
+        # Check if exercise appears in a user's routine
+        exercise_is_used = db.session.query(RoutineExercise).filter_by(exercise_id=exercise_id).first()
+
+        # If exists in a user's routine and user is not admin
+        if exercise_is_used and not user_is_admin():
+            # return error
+            return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Update has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}
+
+        # If it doesn't exist in a user's routine, update the below attributes for the exercise
+        exercise.exercise_name = body_data.get("exercise_name") or exercise.exercise_name
+        exercise.description = body_data.get("description") or exercise.description
+        exercise.body_part = body_data.get("body_part") or exercise.body_part
+
+        # Commit to the database
+        db.session.commit()
+
+        # Return the updated exercise to the user
+        return exercise_schema.dump(exercise)
+    
+    except IntegrityError as err:
+        db.session.rollback()
+        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
+            return {"error": f"The column {err.orig.diag.column_name} is required"}, 400
+        if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
+            # unique violation
+            return {"error": f"The value for '{err.orig.diag.column_name}' must be unique. An exercise with that name already exists. Please choose a different name."}, 400    

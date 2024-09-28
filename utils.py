@@ -7,6 +7,17 @@ from models.user import User
 from models.exercise import Exercise
 from models.routine import Routine
 
+ADMIN_EMAIL = "admin@email.com"
+
+def user_is_admin():
+    # get the user's id from get_jwt_identity
+    user_id = get_jwt_identity()
+    # fetch the user from the db
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.scalar(stmt)
+    # check whether the user is an admin or not
+    return user.is_admin
+
 # Decorator for checking if user is admin
 def auth_as_admin(fn):
     @wraps(fn)

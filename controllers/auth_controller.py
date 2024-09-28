@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
-from utils import auth_as_admin_or_owner
+from utils import auth_as_admin_or_owner, ADMIN_EMAIL
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -19,33 +19,62 @@ DELETED_ACCOUNT_ID = 1
 
 # /auth/register - REGISTER NEW USER
 @auth_bp.route("/register", methods=["POST"])
+@jwt_required(optional=True)
 def register_user():
-    try:
-        # Get the data from the body of the request
-        body_data = UserSchema().load(request.get_json())
-        # Create an instance of the User Model
-        user = User(
-            username = body_data.get("username"),
-            firstname = body_data.get("firstname"),
-            lastname = body_data.get("lastname"),
-            email = body_data.get("email")
-        )
-        # Hash the password using bcrypt
-        password = body_data.get("password")
-        if password:
-            user.password = bcrypt.generate_password_hash(password).decode("utf-8")
-        # Add and commit to the DB
-        db.session.add(user)
-        db.session.commit()
-        # Return acknowledgement for the successful creation of a user account
-        return user_schema.dump(user), 201
-    # If user creation fails, send an appropriate error response based on the type of error/violation
-    except IntegrityError as err:
-        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            return {"error": f"The column {err.orig.diag.column_name} is required"}, 400
-        if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
-            # Unique violation
-            return {"error": "Email address must be unique"}, 400
+    # Get the data from the body of the request
+    body_data = UserSchema().load(request.get_json())
+
+    # Check if given username and/or email exist in database
+    username_taken = db.session.query(User).filter_by(username=body_data.get("username")).first()
+    email_taken = db.session.query(User).filter_by(email=body_data.get("email")).first()
+
+    # If either username or email has been taken, return an error message
+    if username_taken:
+        return {"error": f"The username '{body_data.get('username')}' has been taken. Please choose a unique username."}, 400
+    if email_taken:
+        return {"error": f"The email you've entered '{body_data.get('email')}' is already taken. Please try to log in instead, or email admin: {ADMIN_EMAIL}"}, 400
+
+    # Fetch user_id if user is logged in
+    current_user = get_jwt_identity()
+
+    # Check if there was an admin registration request
+    admin_request = body_data.get("is_admin")
+
+    # If there was an admin request = true, perform error handling for:
+    if admin_request:
+        # User who is not logged in
+        if not current_user:
+            return {"error": "An admin request has been detected, please log in as admin and try again."}, 403
+        else:
+            # If logged in user is not an admin
+            logged_user = db.session.query(User).filter_by(id=current_user).first()
+            if not logged_user.is_admin:
+                return {"error": "Only Admins can register an admin account. User registration has been cancelled."}, 403
+
+    # If the admin request = true and the logged in user is an admin, set admin_result as True. Else, revert back to default (false)        
+    if admin_request and logged_user.is_admin:
+        admin_result = True 
+    else:
+        admin_result = False
+    
+    # Create an instance of the new user using the details from the body of the request
+    user = User(
+        username = body_data.get("username"),
+        firstname = body_data.get("firstname"),
+        lastname = body_data.get("lastname"),
+        email = body_data.get("email"),
+        is_admin = admin_result # True or False, determined by previous code
+    )
+    # Hash the password using bcrypt
+    password = body_data.get("password")
+    if password:
+        user.password = bcrypt.generate_password_hash(password).decode("utf-8")
+    # Add and commit to the DB
+    db.session.add(user)
+    db.session.commit()
+    # Return acknowledgement for the successful creation of a user account
+    return user_schema.dump(user), 201
+
 
 # /auth/login - USER LOGIN
 @auth_bp.route("/login", methods=["POST"])
@@ -71,32 +100,42 @@ def login_user():
 # Check if the user has a valid JWT token in the header of their request / else flask_jwt_extended will return error message.
 @jwt_required()
 def update_user():
-    # get the fields from the body of the request
-    body_data = UserSchema().load(request.get_json(), partial=True)
-    # If the user inserts a new passowrd, store the new password in a variable named "password" 
-    password = body_data.get("password")
-    # fetch the user from the database by extracting the user's identity from the JWT token they passed in the header and finding the user ID it matches to in the database 
-    # SELECT * FROM user WHERE id = get_jwt_identity
-    stmt = db.select(User).filter_by(id=get_jwt_identity())
-    user = db.session.scalar(stmt)
+    try:
+        # get the fields from the body of the request
+        body_data = UserSchema().load(request.get_json(), partial=True)
+        # If the user inserts a new passowrd, store the new password in a variable named "password" 
+        password = body_data.get("password")
 
-    # update the fields as required
-    user.username = body_data.get("username") or user.username
-    user.firstname = body_data.get("firstname") or user.firstname
-    user.lastname = body_data.get("lastname") or user.lastname
-    if password:
-        user.password = bcrypt.generate_password_hash(password).decode("utf-8")
-    # commit the changes to the database
-    db.session.commit()
-    # return a response to the user, acknowledging the changes
-    return user_schema.dump(user)
+        # fetch the user from the database by extracting the user's identity from the JWT token they passed in the header and finding the user ID it matches to in the database 
+        # SELECT * FROM user WHERE id = get_jwt_identity
+        stmt = db.select(User).filter_by(id=get_jwt_identity())
+        user = db.session.scalar(stmt)
+
+        # update the fields as required
+        user.username = body_data.get("username") or user.username
+        user.firstname = body_data.get("firstname") or user.firstname
+        user.lastname = body_data.get("lastname") or user.lastname
+        if password:
+            user.password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        # commit the changes to the database
+        db.session.commit()
+        # return a response to the user, acknowledging the changes
+        return user_schema.dump(user)
+    
+    except IntegrityError as err:
+        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
+            return {"error": f"The column '{err.orig.diag.column_name}' is required"}, 400
+        if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
+            # Unique violation
+            return {"error": f"The value for 'username' must be unique. The username you entered already exists in our database."}, 400
 
     
 # /auth/users/<int:user_id> - DELETE USER
 @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
 # Check if the user has a valid JWT token in the header of their request
 @jwt_required()
-# Check if logged in user is admin or owner
+# Check if logged in user is admin or owner and adds validation
 @auth_as_admin_or_owner
 def delete_user(user_id):
     # find the user with the id from the db
