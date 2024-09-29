@@ -68,7 +68,7 @@ def get_specific_exercise(exercise_id):
 
 
 #/exercises/user/<user_id> - GET - Fetch all exercises created by a user. Allow user to filter by body_part as well using query parameters (?body_part=Chest)
-@exercises_bp.route("/user/<user_id>", methods=["GET"])
+@exercises_bp.route("/user/<int:user_id>", methods=["GET"])
 def get_user_exercises(user_id):
     # Fetch filtered data for body_part query parameter
     body_part = request.args.get("body_part")

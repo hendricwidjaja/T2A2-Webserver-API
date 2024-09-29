@@ -41,6 +41,12 @@ class RoutineSchema(ma.Schema):
     # Defines the "likes_count" field as an integer which is equal to the result of the "likes_count" method/property in the Routine model.
     likes_count = fields.Integer(attribute="likes_count")
 
+    # Create validation for public attribute
+    @validates('public')
+    def validates_public(self, key, value):
+        if not isinstance(value, bool):
+            raise ValueError("Could not recognise the value for 'public'. Please insert either true or false.")
+
     class Meta:
         fields = ("id", "routine_title", "description", "target", "public", "created", "created_by", "routine_exercises", "likes_count")
 

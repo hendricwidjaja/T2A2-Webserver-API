@@ -4,18 +4,18 @@ Welcome to the documentation of Hendric Widjaja's - T2A2: API Webserver.
 
 ## Quick Links
 
-Please use the links below to quickly access key parts of this documentation
+Please use the links below to quickly access key parts of this documentation.
 
 - [Link to source control repository (GitHub)](https://github.com/hendricwidjaja/T2A2-Webserver-API)
-- [R1 - Explain the problem that this app will solve and how this app addresses the problem]
-- [R2 - Task allocation & Tracking]
+- [R1 - Explain the problem that this app will solve and how this app addresses the problem](#r1---explain-the-problem-that-this-app-will-solve-and-how-this-app-addresses-the-problem)
+- [R2 - Task allocation & Tracking](#r2---task-allocation--tracking-trello--github)
     - [Link to Trello](https://trello.com/b/2OOqzzxT/t2a2-api-webserver)
-- [R3 - Third-Party Services, Packages & Dependencies]
-- [R4 - Benefits & Drawbacks of Postgresql]
-- [R5 - Explain the features, purpose & functionalities of the object-relational mapping system (ORM) used in this app]
-- [R6 - Entity Relationship Diagram]
-- [R7 - Explain the implemeneted models and their relationships, including how the relationships aid database implementation]
-- [R8 - API Endpoints Tutorial & Explanation]
+- [R3 - Third-Party Services, Packages & Dependencies](#r3---3rd-party-services-packages--dependencies)
+- [R4 - Benefits & Drawbacks of Postgresql](#r4---benefits--drawbacks-of-of-postgresql)
+- [R5 - Explain the features, purpose & functionalities of the object-relational mapping system (ORM) used in this app](#r5---explain-the-features-purpose-and-functionalities-of-the-orm-system-for-this-app)
+- [R6 - Entity Relationship Diagram](#r6---entity-relationship-diagram)
+- [R7 - Explain the implemeneted models and their relationships, including how the relationships aid database implementation](#r7-explain-the-implemented-models-and-the-relationship-including-how-the-relationshipos-aid-database-implementation)
+- [R8 - API Endpoints Tutorial & Explanation](#r8---api-endpoints-tutorial--explanation)
 
 ## R1 - Explain the problem that this app will solve and how this app addresses the problem
 ### What is the problem?
@@ -35,3 +35,7 @@ Please use the links below to quickly access key parts of this documentation
 ## R7 Explain the implemented models and the relationship, including how the relationshipos aid database implementation
 
 ## R8 - API Endpoints Tutorial & Explanation
+
+### Authentication Controller
+
+#### 

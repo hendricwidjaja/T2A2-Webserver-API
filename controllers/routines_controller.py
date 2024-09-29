@@ -209,6 +209,15 @@ def update_routine(routine_id):
     if not routine:
         return {"error": f"Routine with ID {routine_id} not found."}, 404
 
+    # If routine is originally public
+    if routine.public is True:
+        # Fetch updated value (either true or false) - validation completed in schema
+        update_public = body_data.get('public')
+        # If updated value is public = False
+        if not update_public:
+            # Remove all associated likes in likes table
+            Like.query.filter_by(routine_id=routine_id).delete()
+
     # If routine does exist, update attributes (if provided)
     routine.routine_title = body_data.get('routine_title') or routine.routine_title 
     routine.description = body_data.get('description') or routine.description
@@ -219,6 +228,7 @@ def update_routine(routine_id):
     db.session.commit()
 
     return routine_schema.dump(routine), 200
+
 
 # /routines/<int:routine_id> - DELETE - delete a specific routine (must be owner or admin)
 @routines_bp.route("/<int:routine_id>", methods=["DELETE"])
