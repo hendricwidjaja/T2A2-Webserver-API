@@ -131,33 +131,45 @@ def update_user():
             return {"error": f"The value for 'username' must be unique. The username you entered already exists in our database."}, 400
 
     
-# /auth/users/<int:user_id> - DELETE USER
+# /auth/users/<int:user_id> - DELETE - Delete user. UPON REQUEST, database will keep any public routines but delete private ones (default = delete all). Will also keep any exercises created by user by transferring ownership. This will keep data integrity and also allow users to still have access to these public routines
+
 @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
-# Check if the user has a valid JWT token in the header of their request
-@jwt_required()
-# Check if logged in user is admin or owner and adds validation
-@auth_as_admin_or_owner
+@jwt_required() # Check if the user has a valid JWT token in the header of their request
+@auth_as_admin_or_owner # Validates if user_id in URL exists and if logged in user is admin or owner of resource
 def delete_user(user_id):
-    # find the user with the id from the db
-    # SELECT * FROM users WHERE id==user_id;
+    # Grab data from body of JSON request (provide empty dictionary if body is empty)
+    body_data = request.get_json() or {}
+
+    # Grab "delete_public_routines" from data (default to True if not provided)
+    delete_public_routines = body_data.get("delete_public_routines") or True
+
+    # Validate if user input is either boolean (true or false)
+    if not isinstance(delete_public_routines, bool):
+        # if not boolean, submit an error
+        return {"error": "Invalid input for 'delete_public_routines'. Please input true or false."}, 400
+    
+    # Create variable for better acknowledgement message regarding user's public routines
+    decision = "deleted"
+    if delete_public_routines is False:
+        decision = "kept"
+    
+    # Find & select user in database
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
 
-    # Assign user_id #1 (deleted account) to deleted_account variable
-    deleted_account = DELETED_ACCOUNT_ID
+    # If user wants to leave their public routines on the database
+    if not delete_public_routines:
+        Routine.query.filter_by(user_id=user_id, public=True).update({"user_id": DELETED_ACCOUNT_ID})
 
-    # Delete all private routines
-    private_routines = Routine.query.filter_by(user_id=user_id, public=False).all()
-    for routine in private_routines:
-        db.session.delete(routine)
+    # Delete all/remainder user routines
+    Routine.query.filter_by(user_id=user_id).delete()
 
-    # Transfer ownership of any created exercises and public routines to the "DELETED_ACCOUNT" user_id
-    Routine.query.filter_by(user_id=user_id, public=True).update({"user_id": deleted_account})
-    Exercise.query.filter_by(user_id=user_id).update({"user_id": deleted_account})
+    # Transfer ownership of any user created exercises to the "DELETED_ACCOUNT" user_id
+    Exercise.query.filter_by(user_id=user_id).update({"user_id": DELETED_ACCOUNT_ID})
 
-    # delete the user
+    # Delete user and commit changes to database
     db.session.delete(user)
     db.session.commit()
-    # return an acknowledgement message
-    return {"message": f"User with id {user_id} has been deleted."}
 
+    # return an acknowledgement message
+    return {"message": f"User with id {user_id} has been deleted. We have {decision} your public routines. If there has been a mistake, please email us on '{ADMIN_EMAIL}'. We hope you come back soon!"}, 200

@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 
-from models.exercise import Exercise, exercise_schema, exercises_schema
+from models.exercise import Exercise, exercise_schema, exercises_schema, VALID_BODYPARTS
 from models.user import User
 from models.routine_exercise import RoutineExercise
 from init import db
@@ -14,57 +14,92 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 
 
-# /exercises - GET - fetch all exercises (optional: filter by body_part and/or username)
+# /exercises - GET - fetch all exercises 
 @exercises_bp.route("/", methods=["GET"])
-def get_exercises():
-    # Fetch any fields from body of request
-    body_data = request.get_json(silent=True) or {}
+def get_all_exercises():
+    # Fetch all exercises in database (order in alphabetical order)
+    stmt = db.select(Exercise).order_by(Exercise.exercise_name.asc())
+    exercises = db.session.scalars(stmt)
+    # Check if any exercises exist
+    if exercises:
+        # Return list of exercises
+        return exercises_schema.dump(exercises), 200
+    # Else:
+    else:
+        # Return error message advising no exercises available
+        return {"error": f"There are currently no exercises that could be found. We recommend you create one!"}, 404
 
-    # If username or body_part is provided in the request, store the data in respective variable
-    body_part = body_data.get("body_part", None)
-    username = body_data.get("username", None)
+# /exercises/body-part/<body_part> - GET - fetch all exercises for a specific body_part
+@exercises_bp.route("/body-part/<body_part>", methods=["GET"]) 
+def get_body_part_exercises(body_part):
+    # Fetch all exercises from database with filter for specified body_part mentioned in URL. Capitalise the first letter when filtering to match VALID_BODYPARTS, then order in alphabetical order
+    stmt = db.select(Exercise).filter_by(body_part=body_part.capitalize()).order_by(Exercise.exercise_name.asc())
 
-    # Fetch all exercises
-    stmt = db.select(Exercise)
-
-    # If user provides "body_part" or "username", filter by user value
-    if body_part:
-        stmt = stmt.filter(Exercise.body_part == body_part)
-    if username:
-        stmt = stmt.join(User).filter(User.username == username)
-
-    # Return exercises in alphabetical order (by exercise_name)
-    stmt = stmt.order_by(Exercise.exercise_name.asc())
-
-    # Execute the query
+    # Execute the query and return as a list
     exercises = db.session.scalars(stmt).all()
 
-    # Error handling if exercise can't be found for each case
-    if not exercises:
-        if body_part and username:
-            return {"error": f"We couldn't find any '{body_part}' exercises by '{username}'. Make sure body_part = (Chest, Shoulders, Back, Legs, Triceps, Biceps, Core, Cardio)"}, 404
-        elif body_part:
-            return {"error": f"We couldn't find any '{body_part}' exercises. Try searching by (Chest, Shoulders, Back, Legs, Triceps, Biceps, Core, Cardio)"}, 404
-        elif username:
-            return {"error": f"We couldn't find any exercises by '{username}'."}, 404
-        else:
-            return {"error": "No exercises found."}, 404
-
-    # Return the exercises as a response
-    return exercises_schema.dump(exercises)
+    # Check if any exercises exist
+    if exercises:
+        # If exists, return exercises to user
+        return exercises_schema.dump(exercises), 200
+    # Else:
+    else:
+        # Return error message
+        return {"error": f"There are currently no '{body_part}' exercises that could be found. Our current body part categories include {VALID_BODYPARTS}."}, 404
 
 
-# /exercises/<int:exercise_id> - GET - fetch a specific exercise
-@exercises_bp.route("/<int:exercise_id>", methods=["GET"])
-def get_exercise(exercise_id):
+#/exercises/id/<int:exercise_id> - GET - Fetch a specific exercise by ID
+@exercises_bp.route("/id/<int:exercise_id>", methods=["GET"])
+def get_specific_exercise(exercise_id):
+    # Query the database for exercises that match exercise_id in URL
     stmt = db.select(Exercise).filter_by(id=exercise_id)
 
-    card = db.session.scalar(stmt)
+    # Execute the query
+    exercise = db.session.scalar(stmt)
 
-    if card:
-        return exercise_schema.dump(card), 200
+    # Check if any exercises exist
+    if exercise:
+        # If exists, return exercise to user
+        return exercise_schema.dump(exercise), 200
+    # Else: 
     else:
-        return {"error": f"Exercise with id '{exercise_id}' not found"}, 404
+        # Return an error message stating the exercise does not exist
+        return {"error": f"Exercise with id '{exercise_id}' - does not exist."}, 404
+
+
+#/exercises/user/<user_id> - GET - Fetch all exercises created by a user. Allow user to filter by body_part as well using query parameters (?body_part=Chest)
+@exercises_bp.route("/user/<user_id>", methods=["GET"])
+def get_user_exercises(user_id):
+    # Fetch filtered data for body_part query parameter
+    body_part = request.args.get("body_part")
+
+    # If body_part was provided, fetch exercises while filtering by user_id and body_part
+    if body_part:
+        stmt = db.select(Exercise).filter_by(user_id=user_id, body_part=body_part)
+    # Else:
+    else:
+        # Fetch exercises while filtering only by user_id
+        stmt = db.select(Exercise).filter_by(user_id=user_id)
+
+    # Execute the query and return as a list
+    exercises = db.session.scalars(stmt).all()
+
+    # If exercises exist:
+    if exercises:
+        # Return exercises list to user
+        return exercises_schema.dump(exercises), 200
+    else:
+        # Fetch username from database for informational error message
+        user = User.query.get(user_id)
+        # If user exists, fetch the user's username
+        if user:
+            username = user.username
+        # Else:
+        else:
+            # Return an error message
+            return {"error": f"User with ID '{user_id}' not found."}, 404
+        # Return error message advising no exercise could be found
+        return {"error": f"We could not find any {body_part} exercises created by '{username}'."}, 404
 
 
 # /exercises/ - POST - create an exercise
@@ -134,19 +169,19 @@ def update_exercise(exercise_id):
         # Fetch data from body of request
         body_data = exercise_schema.load(request.get_json(), partial=True)
 
-        # Fetch the exercise the user is requesting to update from the database
-        stmt = db.select(Exercise).filter_by(id=exercise_id)
-        exercise = db.session.scalar(stmt)
-
         # Check if exercise appears in a user's routine
         exercise_is_used = db.session.query(RoutineExercise).filter_by(exercise_id=exercise_id).first()
 
-        # If exists in a user's routine and user is not admin
+        # If exists in a user's routine and user is not admin (owner)
         if exercise_is_used and not user_is_admin():
             # return error
             return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Update has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}
 
-        # If it doesn't exist in a user's routine, update the below attributes for the exercise
+        # Fetch the exercise the user is requesting to update from the database
+        stmt = db.select(Exercise).filter_by(id=exercise_id)
+        exercise = db.session.scalar(stmt)
+
+        # Update the below attributes for the exercise
         exercise.exercise_name = body_data.get("exercise_name") or exercise.exercise_name
         exercise.description = body_data.get("description") or exercise.description
         exercise.body_part = body_data.get("body_part") or exercise.body_part
@@ -157,10 +192,14 @@ def update_exercise(exercise_id):
         # Return the updated exercise to the user
         return exercise_schema.dump(exercise)
     
+    # Catch any integrity errors (most likely unique violations)
     except IntegrityError as err:
+        # Rollback session to retain database integrity
         db.session.rollback()
+        # If error matches not null violation, return error message to user advising requirements
         if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            return {"error": f"The column {err.orig.diag.column_name} is required"}, 400
+            return {"error": f"Both 'exercise_name' and 'body_part' is required"}, 400
+        # If error matches unique violation, return error message to user advising of unique requirement for exercise name
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
             # unique violation
-            return {"error": f"The value for '{err.orig.diag.column_name}' must be unique. An exercise with that name already exists. Please choose a different name."}, 400    
+            return {"error": f"The value for 'exercise_name' must be unique. An exercise with that name already exists. Please choose a different name."}, 400    

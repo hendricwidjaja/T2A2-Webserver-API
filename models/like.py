@@ -1,4 +1,6 @@
 from init import db, ma
+from sqlalchemy import func
+
 
 class Like(db.Model):
     # name of table
@@ -9,6 +11,7 @@ class Like(db.Model):
     # Foreign Keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     routine_id = db.Column(db.Integer, db.ForeignKey("routines.id"), nullable=False)
+    created = db.Column(db.DateTime, server_default=func.current_timestamp(), nullable=False)
 
     routine = db.relationship("Routine", back_populates="likes")
     user = db.relationship("User", back_populates="likes")
@@ -16,7 +19,7 @@ class Like(db.Model):
 
 class LikeSchema(ma.Schema):
     class Meta:
-        fields = ("id", "user", "routine")
+        fields = ("id", "user", "routine", "created")
 
 # to handle a single user object
 like_schema = LikeSchema()

@@ -38,14 +38,14 @@ def seed_tables():
         User(
             username = "Test.User_A",
             firstname = "John",
-            lastname = "Doe",
+            lastname = "Cena",
             email = "usera@email.com",
             password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
         ),
         User(
             username = "Test.User_B",
             firstname = "Julie",
-            lastname = "Doe",
+            lastname = "Dooley",
             email = "userb@email.com",
             password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
         )
@@ -251,6 +251,8 @@ def seed_tables():
             routine = routines[3],
             exercise = exercises[7],
             distance_km = 5,
+            distance_m = 250,
+            hours = 1,
             minutes = 20,
             seconds = 45,
             note = "Insert note here"
