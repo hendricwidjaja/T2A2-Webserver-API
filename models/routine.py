@@ -22,7 +22,7 @@ class Routine(db.Model):
     description = db.Column(db.String)
     target = db.Column(db.String, nullable=False)
     public = db.Column(db.Boolean, default=False, nullable=False)
-    created = db.Column(db.DateTime, server_default=func.current_timestamp(), nullable=False)
+    last_updated = db.Column(db.DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp(), nullable=False)
 
     # Foreign Keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -46,7 +46,7 @@ class RoutineSchema(ma.Schema):
     description = fields.String(validate=Length(max=255), error="You have exceeded the 255 character count limit.")
     target = fields.String(validate=OneOf(VALID_TARGET))
     public = fields.Boolean(missing=False)
-    created = fields.Method("format_timestamp")
+    last_updated = fields.Method("format_timestamp")
     created_by = fields.Nested("UserSchema", only=["username"], attribute="user")
     routine_exercises = fields.List(fields.Nested('RoutineExerciseSchema'), attribute="routine_exercises")
     # Defines the "likes_count" field as an integer which is equal to the result of the "count_likes" method in the Routine model.
@@ -54,7 +54,7 @@ class RoutineSchema(ma.Schema):
 
     # Method to format the created timestamp
     def format_timestamp(self, routine):
-        return routine.created.strftime("%Y-%m-%d %H:%M:%S")
+        return routine.last_updated.strftime("%Y-%m-%d %H:%M:%S")
 
     # Method to call count_likes() on routine instance
     def get_likes_count(self, routine):
@@ -69,7 +69,7 @@ class RoutineSchema(ma.Schema):
 
     # Confirms which fields can be visible
     class Meta:
-        fields = ("id", "routine_title", "description", "target", "public", "created", "created_by", "routine_exercises", "likes_count")
+        fields = ("id", "routine_title", "description", "target", "public", "last_updated", "created_by", "routine_exercises", "likes_count")
 
 # to hand a single routine object
 routine_schema = RoutineSchema()

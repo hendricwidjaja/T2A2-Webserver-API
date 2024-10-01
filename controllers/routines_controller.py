@@ -42,8 +42,8 @@ def get_routines():
                 (Routine.public == True) | (Routine.user_id == user_id)
             )
 
-    # Filter final stmt based on when Routine was created
-    stmt = stmt.order_by(Routine.created.desc())
+    # Filter final stmt based on when Routine was last_updated
+    stmt = stmt.order_by(Routine.last_updated.desc())
 
     # Execute query and return as list
     routines = db.session.scalars(stmt).all()
@@ -92,13 +92,13 @@ def get_target_routine(target):
     
     # If user provided oldest:
     elif sort == "oldest":
-        # Order initial query by when routine was created (oldest to most recent)
-        stmt = stmt.order_by(Routine.created.asc())
+        # Order initial query by when routine was last_updated (oldest to most recent)
+        stmt = stmt.order_by(Routine.last_updated.asc())
     
     # If user provided recent:
     elif sort == "recent":
-        # Order initial query by when routine was created (most recent to oldest)
-        stmt = stmt.order_by(Routine.created.desc())
+        # Order initial query by when routine was last_updated (most recent to oldest)
+        stmt = stmt.order_by(Routine.last_updated.desc())
     # Else
     else:
         # Order initial query by routine title as default
@@ -153,7 +153,7 @@ def liked_routines():
             routine_ids.append(like.routine_id)
 
         # Select all routines from Routine table that match 'routine_ids' and order from newest to oldest
-        # stmt = db.select(Routine).filter(Routine.id.in_(routine_ids)).order_by(Routine.created.desc())
+        # stmt = db.select(Routine).filter(Routine.id.in_(routine_ids)).order_by(Routine.last_updated.desc())
 
         # JOIN the Routine and Like table by linking Routine(id) & Like(routine_id)
         # Filter by selecting the routines where the routine id = the routines the user has liked (from the list created previously)
