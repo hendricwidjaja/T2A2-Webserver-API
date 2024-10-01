@@ -1,20 +1,26 @@
+# Import Blueprint class for better organisation and route management
 from flask import Blueprint
 
+# Import sqlalchemy and bcrypt (password hashing for creating user accounts)
 from init import db, bcrypt
 
+# Import all models to allow for respective object creation for testing purposes
 from models.user import User
 from models.exercise import Exercise
 from models.routine import Routine
 from models.routine_exercise import RoutineExercise
 from models.like import Like
 
+# Create blueprint for database commands
 db_commands = Blueprint("db", __name__)
 
+# Create tables for database from imported models (User, Exercise, Routine, RoutineExercise and Like)
 @db_commands.cli.command("create")
 def create_tables():
     db.create_all()
     print("Tables created!")
 
+# Seed values into database for testing purposes
 @db_commands.cli.command("seed")
 def seed_tables():
     # Create a list of User instances
@@ -48,11 +54,27 @@ def seed_tables():
             lastname = "Dooley",
             email = "userb@email.com",
             password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
+        ),
+        User(
+            username = "Test.User_C",
+            firstname = "Carter",
+            lastname = "Cake",
+            email = "userc@email.com",
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
+        ),
+        User(
+            username = "Test.User_D",
+            firstname = "Donald",
+            lastname = "Danger",
+            email = "userd@email.com",
+            password = bcrypt.generate_password_hash("abc123!").decode("utf-8")
         )
     ]
 
+    # Add list of users to session
     db.session.add_all(users)
 
+    # Create list of exercise instances
     exercises = [
         Exercise(
             exercise_name = "Barbell Bench Press",
@@ -140,40 +162,72 @@ def seed_tables():
         )
     ]
 
+    # Add list of exercise instances to session
     db.session.add_all(exercises)
 
+    # Create a list of routine instances
     routines = [
-        Routine(
+        Routine( # ROUTINE - 1
             routine_title = "User A FullBody Workout",
             description = "This workout is a killer! Targets all body parts. Try to complete in 60min",
-            target = "Full Body",
-            user = users[2]
+            target = "Full-Body",
+            user = users[2] # USER A
         ),
-        Routine(
+        Routine( # ROUTINE - 2
             routine_title = "User B Upper Body Workout",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper Body",
+            target = "Upper-Body",
             public = False,
-            user = users[3]
+            user = users[3] # USER B
         ),
-        Routine(
+        Routine( # ROUTINE - 3
             routine_title = "User A Push Workout",
             description = "This workout is a killer! Targets chest, shoulders and triceps. Try to complete in 60min",
-            target = "Push Workout",
+            target = "Push-Workout",
             public = True,
-            user = users[2]
+            user = users[2] # USER A
         ),
-        Routine(
+        Routine( # ROUTINE - 4
             routine_title = "User B Cardio Workout",
             description = "Zone 2 cardio workout. Keep your heart rate below 120 bpm",
             target = "Cardio",
             public = True,
-            user = users[3]
+            user = users[3] # USER B
+        ),
+        Routine( # ROUTINE - 5
+            routine_title = "User B Upper Body Workout #1",
+            description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
+            target = "Upper-Body",
+            public = True,
+            user = users[3] # USER B
+        ),
+        Routine( # ROUTINE - 6
+            routine_title = "User B Upper Body Workout #2",
+            description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
+            target = "Upper-Body",
+            public = True,
+            user = users[3] # USER B
+        ),
+        Routine( # ROUTINE - 7
+            routine_title = "User B Upper Body Workout #3",
+            description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
+            target = "Upper-Body",
+            public = False,
+            user = users[3] # USER B
+        ),
+        Routine( # ROUTINE - 8
+            routine_title = "User B Upper Body Workout #4",
+            description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
+            target = "Upper-Body",
+            public = True,
+            user = users[4] # USER C
         )
     ]
 
+    # Add all routine instances to session
     db.session.add_all(routines)
 
+    # Create a list of routine exercise instances
     routine_exercises = [
         RoutineExercise(
             routine = routines[0],
@@ -256,20 +310,118 @@ def seed_tables():
             minutes = 20,
             seconds = 45,
             note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[4],
+            exercise = exercises[1],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[4],
+            exercise = exercises[2],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[4],
+            exercise = exercises[5],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[5],
+            exercise = exercises[4],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[5],
+            exercise = exercises[1],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[5],
+            exercise = exercises[2],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[6],
+            exercise = exercises[9],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[6],
+            exercise = exercises[4],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[6],
+            exercise = exercises[11],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[7],
+            exercise = exercises[4],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[7],
+            exercise = exercises[3],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[7],
+            exercise = exercises[5],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
+        ),
+        RoutineExercise(
+            routine = routines[7],
+            exercise = exercises[0],
+            sets = 3,
+            reps = 12,
+            weight = 45,
+            note = "Insert note here"
         )
     ]
 
+    # Add list of routine exercise instances to session
     db.session.add_all(routine_exercises)
 
+    # Create a list of like instances
     likes = [
-        Like(
-            user = users[2],
-            routine = routines[0]
-        ),
-        Like(
-            user = users[2],
-            routine = routines[1]
-        ),
         Like(
             user = users[2],
             routine = routines[2]
@@ -279,17 +431,65 @@ def seed_tables():
             routine = routines[3]
         ),
         Like(
+            user = users[2],
+            routine = routines[4]
+        ),
+        Like(
+            user = users[2],
+            routine = routines[5]
+        ),
+        Like(
+            user = users[2],
+            routine = routines[7]
+        ),
+        Like(
             user = users[3],
-            routine = routines[0]
+            routine = routines[4]
+        ),
+        Like(
+            user = users[3],
+            routine = routines[2]
+        ),
+        Like(
+            user = users[3],
+            routine = routines[5]
+        ),
+        Like(
+            user = users[3],
+            routine = routines[7]
+        ),
+        Like(
+            user = users[4],
+            routine = routines[2]
+        ),
+        Like(
+            user = users[4],
+            routine = routines[5]
+        ),
+        Like(
+            user = users[4],
+            routine = routines[7]
+        ),
+        Like(
+            user = users[5],
+            routine = routines[7]
+        ),
+        Like(
+            user = users[5],
+            routine = routines[3]
         )
     ]
 
+    # Add list of like instances to session
     db.session.add_all(likes)
 
+    # Commit session to database
     db.session.commit()
 
+    # Provide acknowledgement that tables have been seeded
     print("Tables seeded!")
 
+# Drop all tables and data from database
 @db_commands.cli.command("drop")
 def drop_tables():
     db.drop_all()
