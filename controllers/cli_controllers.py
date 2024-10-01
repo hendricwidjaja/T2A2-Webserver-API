@@ -170,13 +170,13 @@ def seed_tables():
         Routine( # ROUTINE - 1
             routine_title = "User A FullBody Workout",
             description = "This workout is a killer! Targets all body parts. Try to complete in 60min",
-            target = "Full-Body",
+            target = "Full-body",
             user = users[2] # USER A
         ),
         Routine( # ROUTINE - 2
-            routine_title = "User B Upper Body Workout",
+            routine_title = "User B Upper body Workout",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper-Body",
+            target = "Upper-body",
             public = False,
             user = users[3] # USER B
         ),
@@ -195,30 +195,30 @@ def seed_tables():
             user = users[3] # USER B
         ),
         Routine( # ROUTINE - 5
-            routine_title = "User B Upper Body Workout #1",
+            routine_title = "User B Upper body Workout #1",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper-Body",
+            target = "Upper-body",
             public = True,
             user = users[3] # USER B
         ),
         Routine( # ROUTINE - 6
-            routine_title = "User B Upper Body Workout #2",
+            routine_title = "User B Upper body Workout #2",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper-Body",
+            target = "Upper-body",
             public = True,
             user = users[3] # USER B
         ),
         Routine( # ROUTINE - 7
-            routine_title = "User B Upper Body Workout #3",
+            routine_title = "User B Upper body Workout #3",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper-Body",
+            target = "Upper-body",
             public = False,
             user = users[3] # USER B
         ),
         Routine( # ROUTINE - 8
-            routine_title = "User B Upper Body Workout #4",
+            routine_title = "User B Upper body Workout #4",
             description = "This workout is a killer! Targets upper body parts. Try to complete in 60min",
-            target = "Upper-Body",
+            target = "Upper-body",
             public = True,
             user = users[4] # USER C
         )
