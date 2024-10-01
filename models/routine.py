@@ -9,7 +9,7 @@ from marshmallow import fields, validates
 from marshmallow.validate import OneOf, Length
 
 # Constant variable for valid "target" muscle groups to be trained to allow for easier tracking and updating of valid "targets"
-VALID_TARGET = ("Full-Body", "Upper-Body", "Lower-Body", "Push-Workout", "Pull-Workout", "Chest", "Shoulders", "Back", "Legs", "Arms", "Core", "Cardio")
+VALID_TARGET = ("Full-body", "Upper-body", "Lower-body", "Push-workout", "Pull-workout", "Chest", "Shoulders", "Back", "Legs", "Arms", "Core", "Cardio")
 
 # Table for Routine Model
 class Routine(db.Model):

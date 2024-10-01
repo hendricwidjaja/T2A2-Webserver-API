@@ -60,6 +60,9 @@ def get_routines():
 @routines_bp.route("/<target>", methods=["GET"])
 @jwt_required(optional=True)
 def get_target_routine(target):
+    # Adjust user input to match format of VALID_TARGET for ease of entry
+    target = target.lower().capitalize()
+    
     # Check if target is valid
     if target not in VALID_TARGET:
         return {"error": f"Invalid target group provided. Please search for a valid target. {', '.join(VALID_TARGET)}"}, 400
@@ -68,7 +71,7 @@ def get_target_routine(target):
     user_id = get_jwt_identity()
 
     # INITIAL QUERY with ALL routines filtered by target provided by user
-    stmt = db.session.query(Routine).filter(Routine.target == target)
+    stmt = db.select(Routine).filter_by(target=target)
 
     # THIS SECTION TAKES THE FILTERED STATEMENT AND ORGANISES THE QUERY BASED OFF QUERY PARAMETER 'SORT' PROVIDED BY USER
 
@@ -101,7 +104,7 @@ def get_target_routine(target):
         # Order initial query by routine title as default
         stmt = stmt.order_by(Routine.routine_title.asc())
 
-    # THIS SECTION FILTERS THE INTIAL QUERY WHICH IS DETERMINED BY USER STATUS (NOT LOGGED IN / LOGGED IN / ADMIN)
+    # THIS SECTION FILTERS THE INITIAL QUERY WHICH IS DETERMINED BY USER STATUS (NOT LOGGED IN / LOGGED IN / ADMIN)
 
     # If user is logged in:
     if user_id:
@@ -256,7 +259,7 @@ def update_routine(routine_id):
                 db.session.delete(like)
 
     # If routine does exist, update attributes (if provided)
-    routine.routine_title = body_data.get('routine_title', routine.routine_title )
+    routine.routine_title = body_data.get('routine_title', routine.routine_title)
     routine.description = body_data.get('description', routine.description)
     routine.target = body_data.get('target', routine.target)
     routine.public = body_data.get('public', routine.public)

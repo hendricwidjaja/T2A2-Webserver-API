@@ -31,7 +31,7 @@ def get_all_exercises():
         # Return error message advising no exercises available
         return {"error": f"There are currently no exercises that could be found. We recommend you create one!"}, 404
 
-# /exercises/body-part/<body_part> - GET - Fetch all exercises for a specific body_part
+# /exercises/body-part/<body_part> - GET - Extends fetch all exercises functionality by allowing search via a filter for a specific body_part
 @exercises_bp.route("/body-part/<body_part>", methods=["GET"]) 
 def get_body_part_exercises(body_part):
     # Fetch all exercises from database with filter for specified body_part mentioned in URL. Capitalise the first letter when filtering to match VALID_BODYPARTS, then order in alphabetical order
@@ -137,7 +137,7 @@ def filter_user_exercises(user_id):
         return {"error": f"We could not find any {body_part} exercises created by '{username}'."}, 404
 
 
-# /exercises/ - POST - create an exercise
+# /exercises/ - POST - create an exercise (User must be logged in)
 @exercises_bp.route("/", methods=["POST"])
 @jwt_required() # Check if user is logged in using jwt_required
 def create_exercise():
@@ -173,7 +173,7 @@ def create_exercise():
         return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
 
-# /exercises/<int:exercise_id> - DELETE - Delete an exercise (user must have created the exercise)
+# /exercises/<int:exercise_id> - DELETE - Delete an exercise (User must have created the exercise or is admin)
 @exercises_bp.route("/<int:exercise_id>", methods=["DELETE"])
 @jwt_required() # Check if user is logged in using jwt_required
 @auth_as_admin_or_owner # Validate if the exercise id in the URL exists and if the logged in user has authority to delete (either as owner or admin)
@@ -198,7 +198,7 @@ def delete_exercise(exercise_id):
     return {"message": f"Exercise with 'ID - {exercise_id}' has been successfully deleted."}, 200
 
 
-# /exercises/<int:exercise_id> - PUT/PATCH - Update an exercise
+# /exercises/<int:exercise_id> - PUT/PATCH - Update an exercise (User must have created the exercise or is admin)
 @exercises_bp.route("/<int:exercise_id>", methods=["PUT", "PATCH"])
 @jwt_required() # Check if user is logged in using jwt_required
 @auth_as_admin_or_owner # Validate if the exercise id in the URL exists and if the logged in user has authority to update (either as owner or admin)
