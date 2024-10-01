@@ -147,8 +147,6 @@ def update_user():
         return user_schema.dump(user)
     
     except IntegrityError as err:
-        if err.orig.pgcode == errorcodes.NOT_NULL_VIOLATION:
-            return {"error": f"The column '{err.orig.diag.column_name}' is required"}, 400
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
             # Unique violation
             return {"error": f"The value for 'username' must be unique. The username you entered already exists in our database."}, 400
