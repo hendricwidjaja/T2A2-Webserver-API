@@ -29,6 +29,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 # If the user decides to keep them on the server, their public routines will be transferred and 'owned' by the deleted account (prior to removing the user from the database)
 DELETED_ACCOUNT_ID = 1
 
+
 # /auth/register - REGISTER NEW USER
 @auth_bp.route("/register", methods=["POST"])
 @jwt_required(optional=True) # User can optionally be logged in to access route (allows admin to create another admin)
@@ -36,6 +37,7 @@ def register_user():
     # Get the data from the body of the request
     body_data = UserSchema().load(request.get_json())
 
+    # Store body data for username and email
     username = body_data.get("username")
     email = body_data.get("email")
 
@@ -65,7 +67,7 @@ def register_user():
             # Return an error message
             return {"error": "An admin request has been detected, please log in as admin and try again."}, 401
         else:
-            # If logged in user is not an admin
+            # If logged in user != admin
             check_log_stmt = db.select(User).filter_by(id=logged_in_user)
             check_logged_user = db.session.scalar(check_log_stmt)
             if not check_logged_user.is_admin:
@@ -107,7 +109,7 @@ def login_user():
     user = db.session.scalar(stmt)
     # If the user exists and the password is correct
     if user and bcrypt.check_password_hash(user.password, body_data.get("password")):
-        # create a JWT token
+        # create a JWT token (expires in 1 day)
         token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         # Then return a response to the user with their email address, admin status and JWT token
         return {"username": user.username, "email": user.email, "token": token, "is_admin": user.is_admin}

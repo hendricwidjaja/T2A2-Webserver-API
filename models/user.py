@@ -30,8 +30,8 @@ class UserSchema(ma.Schema):
     username = fields.String(required=True, validate=Regexp(r"^(?=.{4,20}$)(?!.*[_.]{2})[a-zA-Z0-9._]+$", error="Username must be 4-20 characters long (no spaces). It can only contain letters, digits, periods(.) and or underscores(_). Consecutive periods or underscores are not permitted."))
     email = fields.String(required=True, validate=Regexp(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", error="Invalid Email Format"))
     password = fields.String(required=True, validate=Regexp(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,20}$", error="Password must be 6-20 characters long and must include at least one letter (a-z, A-Z), one number (0-9) & one special character (@$!%*#?&)"))
-    firstname = fields.String(validate=Length(max=50), error="Cannot exceed 50 characters")
-    lastname = fields.String(validate=Length(max=50), error="Cannot exceed 50 characters")
+    firstname = fields.String(required=False, validate=Length(max=50, min=1), error="Cannot exceed 50 characters")
+    lastname = fields.String(required=False, validate=Length(max=50, min=1), error="Cannot exceed 50 characters")
 
     # Confirms which fields can be visible
     class Meta:
