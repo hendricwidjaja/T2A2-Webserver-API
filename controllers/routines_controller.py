@@ -11,8 +11,8 @@ from utils import auth_as_admin_or_owner, user_is_admin
 
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-
 routines_bp = Blueprint("routines", __name__, url_prefix="/routines")
+
 
 # /routines - GET - fetch all public routines + personal private routines if logged in. Admin can see all. Allows users to see what the newest routines which have been added by other users
 @routines_bp.route("/", methods=["GET"])

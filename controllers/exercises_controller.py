@@ -10,7 +10,6 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-
 exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 
 

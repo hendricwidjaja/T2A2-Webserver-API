@@ -10,6 +10,7 @@ from models.user import User
 from models.exercise import Exercise
 from models.routine import Routine
 
+
 # Constant variable for administration email. Is applied to various error messages for contact support reasons.
 ADMIN_EMAIL = "admin@email.com"
 
