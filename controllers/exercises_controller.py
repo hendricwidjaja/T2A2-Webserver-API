@@ -204,9 +204,6 @@ def delete_exercise(exercise_id):
 @auth_as_admin_or_owner # Validate if the exercise id in the URL exists and if the logged in user has authority to update (either as owner or admin)
 def update_exercise(exercise_id):
     try:
-        # Fetch data from body of request
-        body_data = exercise_schema.load(request.get_json(), partial=True)
-
         # Check if exercise appears in a user's routine
         exer_is_used_stmt = db.select(RoutineExercise).filter_by(exercise_id=exercise_id)
         exercise_is_used = db.session.scalars(exer_is_used_stmt).first()
@@ -216,7 +213,10 @@ def update_exercise(exercise_id):
             # return error
             return {"error": f"Exercise with 'ID - {exercise_id}' is being used in an existing routine/s. Update has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}, 409
 
-        # If exercise does not appear in any user routines, fetch the exercise the user is requesting to update from the database
+        # If exercise does not appear in any user routines, fetch data from body of request
+        body_data = exercise_schema.load(request.get_json(), partial=True)
+
+        # Fetch the exercise the user is requesting to update from the database
         stmt = db.select(Exercise).filter_by(id=exercise_id)
         exercise = db.session.scalar(stmt)
 
@@ -240,5 +240,5 @@ def update_exercise(exercise_id):
             return {"error": f"Both 'exercise_name' and 'body_part' is required"}, 400
         # If error matches unique violation, return error message to user advising of unique requirement for exercise name
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
-            # unique violation
+            # Unique violation error message
             return {"error": f"The value for 'exercise_name' must be unique. An exercise with that name already exists. Please choose a different name."}, 400    

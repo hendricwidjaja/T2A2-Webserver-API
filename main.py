@@ -54,10 +54,10 @@ def create_app():
     def incorrect_route(err):
         return {"error": "Unknown error, please ensure all routes and inputs have been inserted correctly"}, 405
     
-    @app.errorhandler(Exception)
-    def exceptions(err):
-        db.session.rollback()
-        return {"error": "An unexpected error occured", "details": str(err)}, 500
+    # @app.errorhandler(Exception)
+    # def exceptions(err):
+    #     db.session.rollback()
+    #     return {"error": "An unexpected error occured", "details": str(err)}, 500
 
     # Register all blueprints
     app.register_blueprint(db_commands)
