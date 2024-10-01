@@ -30,7 +30,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 DELETED_ACCOUNT_ID = 1
 
 
-# /auth/register - REGISTER NEW USER
+# /auth/register - REGISTER NEW USER (User MUST provide email, username and password (Optional: firstname, lastname, is_admin[default=False]))
 @auth_bp.route("/register", methods=["POST"])
 @jwt_required(optional=True) # User can optionally be logged in to access route (allows admin to create another admin)
 def register_user():
@@ -99,7 +99,7 @@ def register_user():
     return user_schema.dump(user), 201
 
 
-# /auth/login - USER LOGIN
+# /auth/login - USER LOGIN (user must provide email and password)
 @auth_bp.route("/login", methods=["POST"])
 def login_user():
     # Get the data from the body of the request
@@ -118,7 +118,7 @@ def login_user():
         # Respond back with an error message
         return {"error": "Invalid email or password"}, 400
     
-# /auth/users/ - UPDATE USER DETAILS
+# /auth/users/ - UPDATE USER DETAILS (Can ONLY update username, firstname, lastname and password)
 @auth_bp.route("/users/", methods=["PUT", "PATCH"])
 # User must be authenticated / logged in
 @jwt_required()
@@ -126,6 +126,14 @@ def update_user():
     try:
         # get the fields from the body of the request
         body_data = UserSchema().load(request.get_json(), partial=True)
+
+        # Check if user is trying to update email
+        email = body_data.get("email")
+        # If user tries to update email
+        if email:
+            # Return an error and request to contact admin
+            return {"error": f"To change your email, contact admin at '{ADMIN_EMAIL}"}
+        
         # If the user inserts a new passowrd, store the new password in a variable named "password" 
         password = body_data.get("password")
 
@@ -147,9 +155,14 @@ def update_user():
         return user_schema.dump(user)
     
     except IntegrityError as err:
+        # Rollback session to retain database integrity
+        db.session.rollback()
         if err.orig.pgcode == errorcodes.UNIQUE_VIOLATION:
             # Unique violation
             return {"error": f"The value for 'username' must be unique. The username you entered already exists in our database."}, 400
+    except Exception as err:
+        db.session.rollback()
+        return {"error": "An unexpected error occured. "}
 
     
 # /auth/users/<int:user_id> - DELETE - Delete user. UPON REQUEST, database will keep any public routines but delete private ones (default = delete all). Will also keep any exercises created by user by transferring ownership. This will keep data integrity and also allow users to still have access to these public routines
@@ -188,14 +201,14 @@ def delete_user(user_id):
 
     # Select all/remainder user routines
     stmt = db.select(Routine).filter_by(user_id=user_id)
-    remaining_routines = db.session.scalars(stmt)
+    remaining_routines = db.session.scalars(stmt).all()
 
     for routine in remaining_routines:
         db.session.delete(routine)
 
     # Transfer ownership of any user created exercises to the "DELETED_ACCOUNT" user_id
     stmt = db.select(Exercise).filter_by(user_id=user_id)
-    user_exercises = db.session.scalars(stmt)
+    user_exercises = db.session.scalars(stmt).all()
 
     for exercise in user_exercises:
         exercise.user_id = DELETED_ACCOUNT_ID
@@ -205,4 +218,4 @@ def delete_user(user_id):
     db.session.commit()
 
     # return an acknowledgement message
-    return {"message": f"User with id {user_id} has been deleted. We have {decision} your public routines. If there has been a mistake, please email us on '{ADMIN_EMAIL}'. We hope you come back soon!"}, 200
+    return {"message": f"User with id {user_id} has been deleted. We have {decision} your public routines. If you have any questions, please email us on '{ADMIN_EMAIL}'. We hope you come back soon!"}, 200

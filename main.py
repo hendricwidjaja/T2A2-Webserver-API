@@ -1,6 +1,7 @@
 import os # Import os for environment functionality
 from flask import Flask # Import flask to create flask application
 from marshmallow.exceptions import ValidationError # Import ValidationError to utlise in app.errorhandler
+from sqlalchemy.exc import IntegrityError # Import IntegrityError to utilise in app.errorhandler
 
 # Import sqlalchemy, mashmallow, bcrypt and JWTManager to be initialised
 from init import db, ma, bcrypt, jwt
@@ -25,11 +26,18 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    # Global ValidationError handle. Returns error message with 400 HTTP status (bad request).
+    # Global ValidationError handle. If validation error occurs, rolls back session and returns error message with 400 HTTP status (bad request).
     @app.errorhandler(ValidationError)
     def validation_error(err):
+        db.session.rollback()
         return {"error": err.messages}, 400
-    
+
+    # Global IntegrityError handler. If integrity error occurs, rolls back session and returns error message with 400 HTTP status (bad request).
+    @app.errorhandler(IntegrityError)
+    def integrity_error(err):
+        db.session.rollback()
+        return {"error": "An unexpected database integrity error has occurred. To prevent any loss, we've rolled back any changes you've made."}, 400
+
     # Global 404 (not found) error handler. Provides a customer error message.
     @app.errorhandler(404)
     def incorrect_route(err):

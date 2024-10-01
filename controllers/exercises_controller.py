@@ -19,8 +19,10 @@ exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 def get_all_exercises():
     # Fetch all exercises in database (order in alphabetical order)
     stmt = db.select(Exercise).order_by(Exercise.exercise_name.asc())
+
     # Execute statement & return as list
     exercises = db.session.scalars(stmt).all()
+
     # Check if any exercises exist
     if exercises:
         # Return list of exercises
@@ -72,25 +74,23 @@ def get_specific_exercise(exercise_id):
 @exercises_bp.route("/user/<int:user_id>/", methods=["GET"])
 def get_user_exercises(user_id):
     # Check if user exists:
-    user_exists = User.query.get(user_id)
+    stmt = db.select(User).filter_by(id=user_id)
+    user_exists = db.session.scalar(stmt)
 
     # If user exists:
     if user_exists:
         # Fetch exercises while filtering only by user_id
         stmt = db.select(Exercise).filter_by(user_id=user_id)
-
         # Execute the query and return as a list
         exercises = db.session.scalars(stmt).all()
-
         # If exercises exist:
         if exercises:
             # Return exercises list to user
             return exercises_schema.dump(exercises), 200
         # Else:
         else:
-            username = user_exists.username
-            return {"error": f"We could not find any exercises created by '{username}' with ID {user_id}."}, 404
-        
+            return {"error": f"We could not find any exercises created by '{user_exists.username}' with ID {user_id}."}, 404
+    # If user does not exist    
     else:
         # Return an error message
         return {"error": f"User with ID '{user_id}' not found."}, 404
@@ -102,21 +102,21 @@ def filter_user_exercises(user_id):
     # Fetch body part from query paramater if provided
     body_part = request.args.get("body_part")
 
-    # Fetch exercises while filtering only by user_id
+    # INITIAL STATEMENT - Fetch exercises while filtering only by user_id
     stmt = db.select(Exercise).filter_by(user_id=user_id)
 
     # If body_part was provided
     if body_part:
         # Validate user input against VALID_BODYPARTS (capitalise query for ease)
         if body_part.capitalize() in VALID_BODYPARTS:
-            # Include body_part filter (capitalised) if valid
+            # Include validated body_part filter + (capitalised) to INITIAL STATEMENT
             stmt = stmt.filter_by(user_id=user_id, body_part=body_part.capitalize())
         # Else:
         else:
-            # Return an error message with prompt
+            # Return an error message with prompt of valid body parts
             return {"error": f"'{body_part}' is an invalid body_part. Please search by {', '.join(VALID_BODYPARTS)}"}, 400
 
-    # If filter is not provided. Execute the query and return as a list
+    # If body part filter is not provided. Execute the query and return as a list
     exercises = db.session.scalars(stmt).all()
 
     # If exercises exist:
@@ -125,10 +125,11 @@ def filter_user_exercises(user_id):
         return exercises_schema.dump(exercises), 200
     else:
         # Fetch username from database for informational error message
-        user = User.query.get(user_id)
+        user_stmt = db.select(User).filter_by(id=user_id)
+        user_exists = db.session.scalar(user_stmt)
         # If user exists, fetch the user's username
-        if user:
-            username = user.username
+        if user_exists:
+            username = user_exists.username
         # Else:
         else:
             # Return an error message
@@ -139,7 +140,7 @@ def filter_user_exercises(user_id):
 
 # /exercises/ - POST - create an exercise
 @exercises_bp.route("/", methods=["POST"])
-@jwt_required()
+@jwt_required() # Check if user is logged in using jwt_required
 def create_exercise():
     try:
         # Get the details of the new exercise from the body of the request
@@ -173,22 +174,23 @@ def create_exercise():
         return {"error": f"An unexpected error occured when trying to add an exercise: {err}"}, 400
 
 
-# /exercises/<int:exercise_id> - DELETE - Delete an exercise
+# /exercises/<int:exercise_id> - DELETE - Delete an exercise (user must have created the exercise)
 @exercises_bp.route("/<int:exercise_id>", methods=["DELETE"])
-@jwt_required()
-@auth_as_admin_or_owner
+@jwt_required() # Check if user is logged in using jwt_required
+@auth_as_admin_or_owner # Validate if the exercise id in the URL exists and if the logged in user has authority to delete (either as owner or admin)
 def delete_exercise(exercise_id):
-    # Fetch the exercise the user is requesting to delete from the database
-    stmt = db.select(Exercise).filter_by(id=exercise_id)
-    exercise = db.session.scalar(stmt)
-
     # Check if exercise appears in a user's routine. 
     exer_is_used_stmt = db.select(RoutineExercise).filter_by(exercise_id=exercise_id)
     exercise_is_used = db.session.scalars(exer_is_used_stmt).first()
-    # If even one exists in a user's routine:
-    if exercise_is_used:
+
+    # If exists in a user's routine and user is not admin (owner)
+    if exercise_is_used and not user_is_admin():
         # return error
         return {"error": f"Exercise with 'ID - {exercise_id}' is being used in existing routine/s. Delete has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}, 409
+
+    # If exercise is not being used, fetch the exercise the user is requesting to delete from the database
+    stmt = db.select(Exercise).filter_by(id=exercise_id)
+    exercise = db.session.scalar(stmt)
 
     # If it doesn't exist in a user's routine, delete the exercise from the database
     db.session.delete(exercise)
@@ -199,8 +201,8 @@ def delete_exercise(exercise_id):
 
 # /exercises/<int:exercise_id> - PUT/PATCH - Update an exercise
 @exercises_bp.route("/<int:exercise_id>", methods=["PUT", "PATCH"])
-@jwt_required()
-@auth_as_admin_or_owner
+@jwt_required() # Check if user is logged in using jwt_required
+@auth_as_admin_or_owner # Validate if the exercise id in the URL exists and if the logged in user has authority to update (either as owner or admin)
 def update_exercise(exercise_id):
     try:
         # Fetch data from body of request
@@ -215,7 +217,7 @@ def update_exercise(exercise_id):
             # return error
             return {"error": f"Exercise with 'ID - {exercise_id}' is being used in an existing routine/s. Update has been aborted. If action is still required, email admin: {ADMIN_EMAIL}"}, 409
 
-        # Fetch the exercise the user is requesting to update from the database
+        # If exercise does not appear in any user routines, fetch the exercise the user is requesting to update from the database
         stmt = db.select(Exercise).filter_by(id=exercise_id)
         exercise = db.session.scalar(stmt)
 
