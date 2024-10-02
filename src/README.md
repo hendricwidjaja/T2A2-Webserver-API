@@ -151,26 +151,6 @@ Flask SQLAlchemy is an object relational mapping (ORM) tool which allows for the
 An example of this implementation can be seen below for the RoutineExercise model within the API.
 ![SQLAlchemy_Example](/docs/R3_sqlalchemy.png)  
 
-
-Integrates SQLAlchemy with Flask. This handles setting up one or more engines, associating tables and models with specific engines, and cleaning up connections and sessions after each request.
-
-Only the engine configuration is specific to each application, other things like the model, table, metadata, and session are shared for all applications using that extension instance. Call init_app to configure the extension on an application.
-
-After creating the extension, create model classes by subclassing Model, and table classes with Table. These can be accessed before init_app is called, making it possible to define the models separately from the application.
-
-Accessing session and engine requires an active Flask application context. This includes methods like create_all which use the engine.
-
-This class also provides access to names in SQLAlchemy's sqlalchemy and sqlalchemy.orm modules. For example, you can use db.Column and db.relationship instead of importing sqlalchemy.Column and sqlalchemy.orm.relationship. This can be convenient when defining models.
-
-app
-Call init_app on this Flask application now.
-
-metadata
-Use this as the default sqlalchemy.schema.MetaData. Useful for setting a naming convention.
-
-session_options
-Arguments used by session to create each session instance. A scopefunc key will be passed to the scoped session, not the session instance. See sqlalchemy.orm.sessionmaker for a list of arguments.
-
 #### Flask-Marshmallow
 
 
