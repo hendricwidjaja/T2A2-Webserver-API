@@ -14,7 +14,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 routines_bp = Blueprint("routines", __name__, url_prefix="/routines")
 
 
-# /routines - GET - fetch all public routines + personal private routines if logged in. Admin can see all. Allows users to see what the newest routines which have been added by other users
+# /routines - GET - fetch all public routines + personal private routines if logged in. Admin can see all. Allows users to see what the newest routines which have been added or updated by other users
 @routines_bp.route("/", methods=["GET"])
 @jwt_required(optional=True)
 def get_routines():
@@ -249,12 +249,11 @@ def update_routine(routine_id):
     if routine.public:
         # Fetch updated value (either true or false) - validation completed in schema
         update_public = body_data.get('public')
-        # If updated value is public = False
-        if not update_public:
+        # If updated value is public = False and the field is not None (i.e. the user has explicitly provided an input which = False)
+        if update_public is not None and not update_public:
             # Remove all associated likes in likes table
             stmt = db.select(Like).filter_by(routine_id=routine_id)
             remove_likes = db.session.scalars(stmt)
-            
             for like in remove_likes:
                 db.session.delete(like)
 

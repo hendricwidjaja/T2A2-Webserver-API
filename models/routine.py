@@ -52,7 +52,7 @@ class RoutineSchema(ma.Schema):
     # Defines the "likes_count" field as an integer which is equal to the result of the "count_likes" method in the Routine model.
     likes_count = fields.Method("get_likes_count")
 
-    # Method to format the created timestamp
+    # Method to format the last_updated timestamp
     def format_timestamp(self, routine):
         return routine.last_updated.strftime("%Y-%m-%d %H:%M:%S")
 
