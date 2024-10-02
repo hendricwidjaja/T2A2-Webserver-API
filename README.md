@@ -96,7 +96,7 @@ git branch <new branch name> / git checkout <new branch name>
 git pull / git merge 
 ```
 
-Although there were other useful features which were used within Git and GitHub such as the creation of <b>.gitignore</b> files, the above git commands form the basis of the main features used for source control and tracking changes to the project.
+Although there were other useful features which were used within Git and GitHub such as the creation of **.gitignore** files, the above git commands form the basis of the main features used for source control and tracking changes to the project.
 
 The remote git repository which is hosted in GitHub can be found using the link here: [https://github.com/hendricwidjaja/T2A2-Webserver-API](https://github.com/hendricwidjaja/T2A2-Webserver-API)
 
@@ -186,53 +186,360 @@ PostgreSQL (previously and still known as Postgres in short) is an ORDBMS (Objec
 ### Authentication Controller
 
 #### 1. Register new user
-- <b>HTTP VERB:</b>  POST
-- <b>ROUTE PATH:</b> 
-- <b>URL:</b> /auth/register
-- <b>Description:</b>
-    - Registers a new user. If user is an admin, can register a new admin by setting "public" : "true"
 
-- Success Example (201)
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @auth_bp.route("/register", methods=["POST"])
+- **URL**: /auth/register
+- **Description**: Registers a new user. If user is an admin, can register a new admin by setting "public" : "true"
+- **Required Headers**: N/A
+- **Required Body**: Email, Username & Password (Optional: firstname, lastname, is_admin)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
 ![Register_new_user_200](./docs/R8/Authentication%20-%20Register%20new%20user%20-%20201.png)
-- ERROR Example (400)
-![alt text](<docs/R8/Authentication - Register new user - 400.png>)
-
+![Register_new_user_400](<docs/R8/Authentication - Register new user - 400.png>)
+![Register_new_user_401](<docs/R8/Authentication - Register new user - 401.png>)
+![Register_new_user_403](<docs/R8/Authentication - Register new user - 403.png>)
 
 #### 2. User Login
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @auth_bp.route("/login", methods=["POST"])
+- **URL**: /auth/login
+- **Description**: Allows a registered user to log in. User must provide their email and password.
+- **Required Headers**: N/A
+- **Required Body**: Email & Password
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 3. User Update Details
+
+- **HTTP VERB**: PUT / PATCH
+- **ROUTE PATH**: @auth_bp.route("/users/", methods=["PUT", "PATCH"])
+- **URL**: /auth/users/
+- **Description**: Allows a logged in user to update their username, firstname, lastname and/or password.
+- **Required Headers**: JWT Token
+- **Required Body**: (Options: Username, password, firstname, lastname)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 4.Delete user
+
+- **HTTP VERB**: DELETE
+- **ROUTE PATH**: @auth_bp.route("/users/<int:user_id>", methods=["DELETE"])
+- **URL**: /auth/users/<int:user_id>
+- **Description**: Allows a logged in user to delete their account. If user is an admin, they can delete ANY account. A user can insert whether they would like to leave any public routines on the database (default = delete both private & public routines)
+- **Required Headers**: JWT Token
+- **Required Body**: "delete_public_routines" (default=True).
+  - To keep public routines on server, type in "delete_public_routines": false
+  - To delete both public and private routines on server, leave body empty OR type in "delete_public_routines": true
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
 
 ### Exercises Controller
 
 #### 5. Fetch all exercises
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @exercises_bp.route("/", methods=["GET"])
+- **URL**: /exercises
+- **Description**: Fetches all exercises in the database (in alphabetical order)
+- **Required Headers**: N/A
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 6. Fetch all exercises (specific body_part)
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @exercises_bp.route("/body-part/<body_part>", methods=["GET"])
+- **URL**: /exercises/body-part/<body_part>
+- **Description**: Fetches all exercises filtered by a specific body_part (e.g. Back). Header / Body data is not required, however this is dynamic **URL**. User will need to enter a valid "body_part" in the **URL** itself. (e.g. /exercises/body-part/Back)
+- **Required Headers**:<italic>See description</italic>
+- **Required Body**:*See description*
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 7. Fetch exercise by ID
-#### 8. Fetch exercise by user 
-#### 9. Fetch exercise by user 
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @exercises_bp.route("/id/<int:exercise_id>", methods=["GET"])
+- **URL**: /exercises/id/<int:exercise_id>
+- **Description**: Fetches a specific exercise based on exercise_id. Exercise ID to be input into **URL** (e.g. exercises/id/5) where exercise ID = 5
+- **Required Headers**: N/A
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+
+#### 8. Fetch all exercises by user ID
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @exercises_bp.route("/user/<int:user_id>/", methods=["GET"])
+- **URL**: /exercises/user/<int:user_id>/
+- **Description**: Fetches all exercises created by a specific user.User ID to be input into **URL** (e.g. exercises/user/9) where exercise ID = 9
+- **Required Headers**: N/A
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+#### 9. Fetch exercise by user (filter by query paramater e.g. ?body_part=Chest)
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @exercises_bp.route("/user/<int:user_id>/filter", methods=["GET"])
+- **URL**: /exercises/user/<int:user_id>/filter
+- **Description**: Headers and body data is not required. However user has the option to filter response data via "body_part". (e.g. /user/9/filter?body_part=Chest) where USER ID = 9
+- **Required Headers**: *See body*
+- **Required Body**: *See body*
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 10. Create an exercise
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @exercises_bp.route("/", methods=["POST"])
+- **URL**: /exercises
+- **Description**: Allows a logged in user to create an exercise. The new exercise must have a unique name and must be allocated to a specific "body_part". VALID BODY_PARTS: ("Chest", "Shoulders", "Back", "Legs", "Triceps", "Biceps", "Core", "Cardio")
+- **Required Headers**: JWT Token
+- **Required Body**: (Required: exercicse_name, body_part) (Optional: description)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 11. Delete an exercise
+
+- **HTTP VERB**: DELETE
+- **ROUTE PATH**: @exercises_bp.route("/<int:exercise_id>", methods=["DELETE"])
+- **URL**: /exercises/<int:exercise_id>
+- **Description**: Allows the creator of the exercise or an admin to delete an exercise from the database. Can only be deleted if it is not being used in any user routine.
+- **Required Headers**: JWT Token
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 12. Update an exercise
+
+- **HTTP VERB**: PUT / PATCH
+- **ROUTE PATH**: @exercises_bp.route("/<int:exercise_id>", methods=["PUT", "PATCH"])
+- **URL**: /exercises/<int:exercise_id>
+- **Description**: Allows the creator of the exercise or an admin to update an exercise from the database. Can only be updated if it is not being used in any user routine.
+- **Required Headers**: JWT Token
+- **Required Body**: (Optional: exercise_name, description, body_part)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
 
 ### Routines Controller
 
 #### 13. Fetch all routines
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @routines_bp.route("/", methods=["GET"])
+- **URL**: /routines
+- **Description**: Fetch all routines (filter determined by user logged in). Routines will be ordered from most recent to oldest
+  - If not logged in = public routines only
+  - If logged in = public routines + user's personal/private routines
+  - If admin = ALL routines
+- **Required Headers**: (Optional: JWT Token)
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+
 #### 14. Fetch all routines (filter by target)
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @routines_bp.route("/<target>", methods=["GET"])
+- **URL**: /routines/<target>
+- **Description**: Search for a public routine which targets a specific muscle group. 
+  - User can also order the selected muscle group by popularity (how many likes), recent, and oldest using paramater query 
+  - (e.g. ?sort=*filter* where *filter* can = popular, recent, oldest)
+- **Required Headers**: (Optional: JWT Token)
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+
 #### 15. Fetch a routine by ID
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>", methods=["GET"])
+- **URL**: /routines/<int:routine_id>
+- **Description**: Allows a user to fetch a routine (restrictions as per below)
+  - *Public Routines*:
+    - If not logged in = OK
+    - If logged in = OK
+    - If logged in (owner of routine) = OK
+    - If admin = OK
+
+  - *Private Routines*:
+    - If not logged in = ERROR
+    - If logged in = ERROR
+    - If logged in (owner of routine) = OK
+    - If admin = OK
+- **Required Headers**: (Optional: JWT Token)
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+
 #### 16. Fetch all routines (liked)
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @routines_bp.route("/liked", methods=["GET"])
+- **URL**: /routines/liked
+- **Description**: Allows a logged in user to fetch all the routines they have liked. Ordered by most recently liked routine till oldest.
+- **Required Headers**: JWT Token
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 17. Create a new routine
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @routines_bp.route("/", methods=["POST"])
+- **URL**: /routines
+- **Description**: Allows a logged in user to create a new routine. Routine must have a title and be allocated to a 'target'. (e.g. Upper Body)
+- **Required Headers**: JWT Token
+- **Required Body**: routine_title, target (optional: description, public)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 18. Update a routine
+
+- **HTTP VERB**: PUT / PATCH
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>", methods=["PUT", "PATCH"])
+- **URL**: /routines/<int:routine_id>
+- **Description**: Allows an owner of a routine or an admin to update details of a specific routine.
+  - NOTE: If a routine is being changed from public to 'private', all likes associated with the routine will be deleted.
+  - This is to ensure that users who have liked the routine (other than the creator) will no longer be able to view the routine.
+- **Required Headers**: JWT Token
+- **Required Body**: (Optional: routine_title, description, target, public)
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 19. Delete a routine
+
+- **HTTP VERB**: DELETE
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>", methods=["DELETE"])
+- **URL**: /routines/<int:routine_id>
+- **Description**: Allows an owner of a routine or an admin to delete a specific routine.
+- **Required Headers**: JWT Token
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 20. Add an exercise to a routine
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/exercise", methods=["POST"])
+- **URL**: /routines/<int:routine_id>/exercise
+- **Description**: Allows a user to add an exercise to their routine with various attributes. Routine ID required in URL
+  - Attributes include ("sets", "reps", "weight", "distance_km", "distance_m", "hours", "minutes", "seconds", "note")
+- **Required Headers**: JWT Token
+- **Required Body**: exercise_id (At least one of: "sets", "reps", "weight", "distance_km", "distance_m", "hours", "minutes", "seconds", "note")
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 21. Fetch an exercise associated to a routine
+
+- **HTTP VERB**: GET
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/exercise/<int:routine_exercise_id>", methods=["GET"])
+- **URL**: /routines/<int:routine_id>/exercise/<int:routine_exercise_id>
+- **Description**: Allows a user to fetch a specific exercise associated with a routine **(restrictions apply)**:
+  - *Exercise within Public Routines*:
+    - If not logged in = **OK**
+    - If logged in = **OK**
+    - If logged in (owner of routine) = **OK**
+    - If admin = **OK**
+
+  - *Exercise within Private Routines*:
+    - If not logged in = **ERROR**
+    - If logged in = **ERROR**
+    - If logged in (owner of routine) = **OK**
+    - If admin = **OK**
+- **Required Headers**: (Optional: JWT Token)
+- **Required Body**: N/A
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 22. Update an exercise associated to a routine
+
+- **HTTP VERB**: PUT / PATCH
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/exercise/<int:routine_exercise_id>", methods=["PUT", "PATCH"])
+- **URL**: /routines/<int:routine_id>/exercise/<int:routine_exercise_id>
+- **Description**: Allows the creator of the routine or an admin to update an exercise within a routine. Routine and an associated routine_exercise ID is required in URL
+- **Required Headers**: JWT Token
+- **Required Body**: 
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
 #### 23. Delete an exercise associated to a routine
+
+- **HTTP VERB**: DELETE
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/exercise/<int:routine_exercise_id>", methods=["DELETE"])
+- **URL**: /routines/<int:routine_id>/exercise/<int:routine_exercise_id>
+- **Description**: 
+- **Required Headers**: 
+- **Required Body**: 
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+# /routines/<int:routine_id>/<int:routine_exercise_id> - DELETE - Delete a specific routine exercise (must be owner or admin)
+@routines_bp.route("/<int:routine_id>/exercise/<int:routine_exercise_id>", methods=["DELETE"])
+@jwt_required()
+@auth_as_admin_or_owner # Verify if logged in user is owner of the routine ID or is admin
+def delete_routine_exercise(routine_id, routine_exercise_id):
+
 #### 24. Like a routine
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/like", methods=["POST"])
+- **URL**: /routines/<int:routine_id>/like
+- **Description**: 
+- **Required Headers**: 
+- **Required Body**: 
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+# /routines/<int:routine_id>/like - POST - like a routine (must be logged in)
+@routines_bp.route("/<int:routine_id>/like", methods=["POST"])
+@jwt_required() # User must be logged in to assign their user ID to the newly created like.
+def like_routine(routine_id):
+
 #### 25. Unlike a routine
+
+- **HTTP VERB**: DELETE
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/like", methods=["DELETE"])
+- **URL**: /routines/<int:routine_id>/like
+- **Description**: 
+- **Required Headers**: 
+- **Required Body**: 
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+# /routines/<int:routine_id>/like - DELETE - Delete a like from a specific routine (must be logged in)
+@routines_bp.route("/<int:routine_id>/like", methods=["DELETE"])
+@jwt_required() # Check if used is logged in
+def unlike_routine(routine_id):
+
 #### 26. Copy another user's routine
+
+- **HTTP VERB**: POST
+- **ROUTE PATH**: @routines_bp.route("/<int:routine_id>/copy", methods=["POST"])
+- **URL**: /routines/<int:routine_id>/copy
+- **Description**: 
+- **Required Headers**: 
+- **Required Body**: 
+
+**Success Example (201) vs Error Examples (401, 401, 403)**
+
+# /routines/<int:routine_id>/copy - POST - Copy another user's routine as personal private routine
+@routines_bp.route("/<int:routine_id>/copy", methods=["POST"])
+@jwt_required()  # User must be logged in
+def copy_routine(routine_id):
+
 
 ## References
 
-Chaudhuri, A. 2023. <i>The buddy boost: how 'accoutability partners' make you health, happy and more successful</i>. The Guardian, accessed 27 September 2024, Available at: [https://www.theguardian.com/lifeandstyle/2023/nov/27/the-buddy-boost-how-accountability-partners-make-you-healthy-happy-and-more-successful](https://www.theguardian.com/lifeandstyle/2023/nov/27/the-buddy-boost-how-accountability-partners-make-you-healthy-happy-and-more-successful)
+Chaudhuri, A. 2023. *The buddy boost: how 'accoutability partners' make you health, happy and more successful*. The Guardian, accessed 27 September 2024, Available at: [https://www.theguardian.com/lifeandstyle/2023/nov/27/the-buddy-boost-how-accountability-partners-make-you-healthy-happy-and-more-successful](https://www.theguardian.com/lifeandstyle/2023/nov/27/the-buddy-boost-how-accountability-partners-make-you-healthy-happy-and-more-successful)
 
-Davis, A.J., MacCarron, P. and Cohen, E. 2021. <i>Social reward and support effects on exercise experiences and performance: Evidence from parkrun</i>. PLoS One, 16(9), accessed 27 September 2024, Available at: [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8443045/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8443045/) 
+Davis, A.J., MacCarron, P. and Cohen, E. 2021. *Social reward and support effects on exercise experiences and performance: Evidence from parkrun*. PLoS One, 16(9), accessed 27 September 2024, Available at: [https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8443045/](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8443045/) 
 

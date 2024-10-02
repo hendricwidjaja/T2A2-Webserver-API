@@ -472,6 +472,16 @@ def update_routine_exercise(routine_id, routine_exercise_id):
     # If routine_exercise does not belong to specified routine, provide error    
     if routine_exercise.routine_id != routine_id:
         return {"error": f"Routine with ID '{routine_id}' does not have a routine exercise with ID '{routine_exercise_id}'."}, 404
+    
+    # Check if the exercise exists
+    exercise_id = body_data.get('exercise_id')
+    exer_stmt = db.select(Exercise).filter_by(id=exercise_id)
+    exercise_exists = db.session.scalar(exer_stmt)
+
+    # If exercise does not exist
+    if not exercise_exists:
+        # Return not found error
+        return {"error": f"Exercise with ID {exercise_id} does not exist."}, 404
 
     routine_exercise.routine_id = routine_id
     routine_exercise.exercise_id = body_data.get("exercise_id") or routine_exercise.exercise_id
