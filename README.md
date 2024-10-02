@@ -114,11 +114,12 @@ PostgreSQL is an object relational database management system which is incorpora
 Other than the above, the Workout Together Planner API also utilises functions such as rollbacks which PostgreSQL supports. This allows any sessions or transactions to be cancelled in the event of errors that may cause integrity issues.
 
 #### Flask
-Flask is largely considered a micro web framework which is ultralight and easy to customise to allow various functionalities that can easily be extended through various libraries. Within this API, Flask allows for the structuring of HTTP routing to specific controllers, allowing the API to then logically fetch, create, delete and update data, before rendering the response back to the user. Flask is a crucial component of this API to handle the various routes and ensures that the right logic is applied to the data and given back to the user. Essentially, flask acts as a central control hub for the view functions and rules that are applied to URLs. Below is an example of several routes within the API that provide various functions/logic.
+Flask is largely considered a micro web framework which is ultralight and easy to customise to allow various functionalities that can easily be extended through various libraries. Within this API, Flask allows for the structuring of HTTP routing to specific controllers, allowing the API to then logically fetch, create, delete and update data, before rendering the response back to the user. Flask is a crucial component of this API to handle the various routes and ensures that the right logic is applied to the data and given back to the user. Essentially, flask acts as a central control hub for the view functions and rules that are applied to URLs. Below is an example of several routes within the API that provide various functions/logic (via Blueprints).
 
 ```
 from flask import Flask
 ```
+![Flask_route_examples](/docs/R3_flask_example.png)
 
 #### Flask-Bcrypt & bcrypt
 Flask-Bcrypt is utilised to manage various verification and authentication features in APIs. It utilises various dependencies which make it possible to seamlessly integrate password hashing and password checking (bcrypt). This feature is a crucial aspect of maintaining the applications security and protection of user data. This helps prevent the sensitive password data of users of an application to be exposed. Examples of the usage of password hashing and checking can be seen under the below bcrypt dependency explanation.
@@ -128,6 +129,12 @@ from flask_bcrypt import Bcrypt # Importing
 pw_hash = bcrypt.generate_password_hash(password) # Hashing passwords
 bcrypt.check_password_hash(pw_hash, candidate) # Checking passwords
 ```
+- An example of checking password
+![bcrypt_example_1](./docs/R3_bcrypt1.png)
+
+- An example of password hashing
+![bcrypt_example_2](./docs/R3_bcrypt2.png)
+
 
 #### Flask-JWT-Extended
 Flask-JWT-Extended is what allows the JWT (JSON Web Token) functionality within this API. This authentication feature is another widely incorporated package which handles verfication of users and the provision of security tokens, enabling the control of access to data and database functions. 
@@ -142,34 +149,15 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 - get_jwt_identity:
     - a function which allows an application to easily retrieve the logged in user's ID, providing a quick form of identification
 
+
 #### FLask_SQLAlchemy
 Flask SQLAlchemy is an object relational mapping (ORM) tool which allows for the abstraction of simplification of performing database operations. It does this by 'translating' data within the database into Python objects. The main features which are incorporated in this app are:
 - Metadata
 - Sessions
-- Access to Column and relationship for when defining models
+- Access to Columns and relationships for when defining models
 
 An example of this implementation can be seen below for the RoutineExercise model within the API.
 ![SQLAlchemy_Example](/docs/R3_sqlalchemy.png)  
-
-
-Integrates SQLAlchemy with Flask. This handles setting up one or more engines, associating tables and models with specific engines, and cleaning up connections and sessions after each request.
-
-Only the engine configuration is specific to each application, other things like the model, table, metadata, and session are shared for all applications using that extension instance. Call init_app to configure the extension on an application.
-
-After creating the extension, create model classes by subclassing Model, and table classes with Table. These can be accessed before init_app is called, making it possible to define the models separately from the application.
-
-Accessing session and engine requires an active Flask application context. This includes methods like create_all which use the engine.
-
-This class also provides access to names in SQLAlchemy's sqlalchemy and sqlalchemy.orm modules. For example, you can use db.Column and db.relationship instead of importing sqlalchemy.Column and sqlalchemy.orm.relationship. This can be convenient when defining models.
-
-app
-Call init_app on this Flask application now.
-
-metadata
-Use this as the default sqlalchemy.schema.MetaData. Useful for setting a naming convention.
-
-session_options
-Arguments used by session to create each session instance. A scopefunc key will be passed to the scoped session, not the session instance. See sqlalchemy.orm.sessionmaker for a list of arguments.
 
 #### Flask-Marshmallow
 
@@ -191,11 +179,56 @@ PostgreSQL (previously and still known as Postgres in short) is an ORDBMS (Objec
 
 ## R6 - Entity Relationship Diagram
 
-## R7 Explain the implemented models and the relationship, including how the relationshipos aid database implementation
+## R7 Explain the implemented models and the relationship, including how the relationships aid database implementation
 
 ## R8 - API Endpoints Tutorial & Explanation
 
 ### Authentication Controller
+
+#### 1. Register new user
+- <b>HTTP VERB:</b>  POST
+- <b>ROUTE PATH:</b> 
+- <b>URL:</b> /auth/register
+- <b>Description:</b>
+    - Registers a new user. If user is an admin, can register a new admin by setting "public" : "true"
+
+- Success Example (201)
+![Register_new_user_200](./docs/R8/Authentication%20-%20Register%20new%20user%20-%20201.png)
+- ERROR Example (400)
+![alt text](<docs/R8/Authentication - Register new user - 400.png>)
+
+
+#### 2. User Login
+#### 3. User Update Details
+#### 4.Delete user
+
+### Exercises Controller
+
+#### 5. Fetch all exercises
+#### 6. Fetch all exercises (specific body_part)
+#### 7. Fetch exercise by ID
+#### 8. Fetch exercise by user 
+#### 9. Fetch exercise by user 
+#### 10. Create an exercise
+#### 11. Delete an exercise
+#### 12. Update an exercise
+
+### Routines Controller
+
+#### 13. Fetch all routines
+#### 14. Fetch all routines (filter by target)
+#### 15. Fetch a routine by ID
+#### 16. Fetch all routines (liked)
+#### 17. Create a new routine
+#### 18. Update a routine
+#### 19. Delete a routine
+#### 20. Add an exercise to a routine
+#### 21. Fetch an exercise associated to a routine
+#### 22. Update an exercise associated to a routine
+#### 23. Delete an exercise associated to a routine
+#### 24. Like a routine
+#### 25. Unlike a routine
+#### 26. Copy another user's routine
 
 ## References
 
