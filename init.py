@@ -1,3 +1,4 @@
+# Import SQLAlchemy, Marshmallow, Bcrypt, JWTManager and create an instance of each
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt

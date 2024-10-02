@@ -1,15 +1,30 @@
+# Import Blueprint & request for better organisation and route management
 from flask import Blueprint, request
 
-from models.exercise import Exercise, exercise_schema, exercises_schema, VALID_BODYPARTS
+# Import models and schemas required for object creation and to serialise/deserialise data
+from models.exercise import Exercise, exercise_schema, exercises_schema, VALID_BODYPARTS # VALID_BODYPARTS for validation of user entries
 from models.user import User
 from models.routine_exercise import RoutineExercise
+
+# Import SQLAlchemy database for database operations
 from init import db
+
+# Import from utils.py:
+# auth_as_admin_or_owner: decorator which checks if logged in user has authorisation to access the decorated route
+# ADMIN_EMAIL: used for abstracting admin email
+# user_is_admin: function which checks if logged in user is admin
 from utils import auth_as_admin_or_owner, ADMIN_EMAIL, user_is_admin
 
+# Import error handling libraries
 from sqlalchemy.exc import IntegrityError
 from psycopg2 import errorcodes
+
+# Import authentication libraries
+# jwt_required: decorator which checks if user logged in
+# get_jwt_identity: function which grabs the logged in users user ID
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+# Create a blueprint named "exercises". Also decorate with url_prefix for management of routes.
 exercises_bp = Blueprint("exercises", __name__, url_prefix="/exercises")
 
 
@@ -69,7 +84,7 @@ def get_specific_exercise(exercise_id):
         return {"error": f"Exercise with id '{exercise_id}' - does not exist."}, 404
 
 
-#/exercises/user/<user_id> - GET - Fetch all exercises created by a user.
+#/exercises/user/<user_id> - GET - Fetch all exercises created by a user (search by user ID entered into URL).
 @exercises_bp.route("/user/<int:user_id>/", methods=["GET"])
 def get_user_exercises(user_id):
     # Check if user exists:
