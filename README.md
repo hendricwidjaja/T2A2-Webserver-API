@@ -2,6 +2,8 @@
 
 Welcome to the documentation of Hendric Widjaja's - T2A2: API Webserver.
 
+NOTE: FOR THE LATEST VERSION, PLEASE REFER TO T2A2-WEBSERVER-API-V2 (LINK HERE): [https://github.com/hendricwidjaja/T2A2-WebServer-API-v2](https://github.com/hendricwidjaja/T2A2-WebServer-API-v2)
+
 ## Quick Links
 
 Please use the links below to quickly access key parts of this documentation.
